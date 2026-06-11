@@ -1,0 +1,2075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wodrobe — your wardrobe, styled</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#A6491F">
+<style>
+:root{
+  --bg:#F7F4EE; --surface:#FFFFFF; --ink:#221D16; --muted:#6E665B;
+  --line:#E5DFD3; --accent:#A6491F; --accent-soft:#F3E2D7; --chip:#EFE9DD;
+  --good:#3B6D11; --good-soft:#EAF3DE; --bad:#A32D2D; --bad-soft:#FCEBEB;
+  --radius:14px; --serif:Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{ --bg:#15120E; --surface:#201C16; --ink:#EDE7DC; --muted:#9A917F;
+    --line:#373128; --accent:#D87A45; --accent-soft:#3A271C; --chip:#2B261F;
+    --good:#9DC468; --good-soft:#26330F; --bad:#E08585; --bad-soft:#3A1A1A; }
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+button{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.ghost{background:transparent}
+input,select,textarea{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:70px}
+label{font-size:12px;color:var(--muted);display:block;margin:10px 0 4px}
+h1{font-family:var(--serif);font-weight:500;font-size:28px}
+h2{font-family:var(--serif);font-weight:500;font-size:20px;margin-bottom:12px}
+h3{font-size:15px;font-weight:600}
+.app{display:flex;min-height:100vh}
+.side{width:212px;flex-shrink:0;border-right:1px solid var(--line);padding:22px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{font-family:var(--serif);font-size:24px;letter-spacing:.5px;margin-bottom:18px;padding-left:10px}
+.brand span{color:var(--accent)}
+.nav-btn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:none;background:transparent;padding:10px;border-radius:10px;color:var(--muted)}
+.nav-btn svg{flex-shrink:0}
+.nav-btn.active{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.side-foot{margin-top:auto;font-size:11px;color:var(--muted);padding:10px;line-height:1.5}
+main{flex:1;padding:28px 32px;max-width:1060px}
+.topline{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.grid{display:grid;gap:14px}
+.g-stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g-items{grid-template-columns:repeat(auto-fill,minmax(168px,1fr))}
+.stat-label{font-size:12px;color:var(--muted)}
+.stat-num{font-size:26px;font-family:var(--serif);margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--chip);border-radius:999px;padding:3px 10px;font-size:12px;color:var(--muted)}
+.chip .dot{width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.chip button{border:none;background:none;padding:0 0 0 2px;font-size:13px;color:var(--muted);line-height:1}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter-row .f{border-radius:999px;padding:6px 14px;font-size:13px}
+.filter-row .f.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.item-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:transform .1s}
+.item-card:hover{transform:translateY(-2px)}
+.swatch{aspect-ratio:4/3.2;position:relative}
+.swatch .fav{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.85);color:#A6491F;border-radius:999px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.item-meta{padding:10px 12px}
+.item-meta .nm{font-size:13.5px;font-weight:600}
+.item-meta .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.mini{font-size:11px;color:var(--muted)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;align-items:end}
+.opt-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.opt-items{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 12px}
+.opt-tile{width:86px}
+.opt-tile .sw{height:70px;border-radius:10px;border:1px solid var(--line)}
+.opt-tile .role{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:5px}
+.opt-tile .nm{font-size:11.5px;line-height:1.3}
+.reason{font-size:13.5px;color:var(--muted);border-left:3px solid var(--accent-soft);padding-left:10px;margin:10px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-good{color:var(--good);border-color:var(--good)}
+.btn-bad{color:var(--bad);border-color:var(--bad)}
+.event-card{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.badge{font-size:11px;border-radius:6px;padding:2px 8px;background:var(--accent-soft);color:var(--accent)}
+.overlay{position:fixed;inset:0;background:rgba(20,15,8,.45);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:50;overflow:auto}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;width:100%;max-width:480px}
+.modal h2{display:flex;justify-content:space-between;align-items:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.checks{display:flex;gap:6px;flex-wrap:wrap}
+.checks label{display:inline-flex;align-items:center;gap:5px;margin:0;background:var(--chip);border-radius:999px;padding:5px 11px;font-size:12px;cursor:pointer;color:var(--ink)}
+.checks input{width:auto}
+.note{font-size:12px;color:var(--muted);background:var(--chip);border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.5}
+.pal{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.empty{color:var(--muted);font-size:13.5px;padding:24px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius)}
+.section{margin-top:30px}
+.up-tile{border:2px dashed var(--line);border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--muted);cursor:pointer;min-height:180px;font-size:13px;background:transparent;padding:10px;text-align:center}
+.up-tile:hover{border-color:var(--accent);color:var(--accent)}
+.up-tile .plus{font-size:30px;line-height:1;font-family:var(--serif)}
+.steps{display:flex;gap:6px;margin:8px 0 16px}
+.steps .s{flex:1;height:4px;border-radius:99px;background:var(--chip)}
+.steps .s.on{background:var(--accent)}
+.photo-btn{display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line);border-radius:12px;padding:14px;width:100%;cursor:pointer;color:var(--muted);background:transparent}
+.photo-btn:hover{border-color:var(--accent);color:var(--accent)}
+.photo-btn img{max-height:96px;border-radius:8px}
+.rev-img{width:100%;max-height:210px;object-fit:cover;border-radius:10px;margin:8px 0}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;font-size:11px;color:var(--muted);text-align:center;margin-bottom:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-cell{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;cursor:pointer;padding:0}
+.cal-cell.today{border:2px solid var(--accent)}
+.cal-cell.logged{background:var(--accent-soft)}
+.cal-dots{display:flex;gap:3px}
+.cal-dots i{width:7px;height:7px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.15)}
+.bar{height:6px;background:var(--chip);border-radius:99px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+@media (max-width:760px){
+  .app{flex-direction:column}
+  .side{width:100%;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;padding:10px 12px;border-right:none;border-bottom:1px solid var(--line)}
+  .brand{margin:0 10px 0 0;font-size:20px}
+  .nav-btn{width:auto;white-space:nowrap;padding:8px 10px}
+  .nav-btn .lbl{display:none}
+  .side-foot{display:none}
+  main{padding:18px 14px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">wo<span>drobe</span></div>
+    <button class="nav-btn" data-act="nav" data-v="dashboard">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+      <span class="lbl">Dashboard</span></button>
+    <button class="nav-btn" data-act="nav" data-v="wardrobe">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 7.5 9 4l3 2 3-2 5 3.5-2 3-2-1V20H8v-8.5l-2 1z"/></svg>
+      <span class="lbl">Wardrobe</span></button>
+    <button class="nav-btn" data-act="nav" data-v="dress">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/></svg>
+      <span class="lbl">Dress me</span></button>
+    <button class="nav-btn" data-act="nav" data-v="calendar">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 5.5 4.5 7 7 4"/><path d="M3 11.5 4.5 13 7 10"/><circle cx="4.7" cy="18" r="1.3"/></svg>
+      <span class="lbl">Calendar</span></button>
+    <button class="nav-btn" data-act="nav" data-v="events">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <span class="lbl">Events</span></button>
+    <button class="nav-btn" data-act="nav" data-v="profile">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></svg>
+      <span class="lbl">Profile</span></button>
+    <div class="side-foot">Prototype build — local rules stand in for the Claude API. See IMPLEMENTATION_PLAN.md for the production wiring.</div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<input type="file" id="filePick" accept="image/*" multiple style="display:none">
+<input type="file" id="facePick" accept="image/*" style="display:none">
+<input type="file" id="bodyPick" accept="image/*" style="display:none">
+<input type="file" id="mirrorPick" accept="image/*" style="display:none">
+<input type="file" id="importPick" accept="application/json,.json" style="display:none">
+
+<script>
+"use strict";
+const LS_KEY = "wodrobe_v1";
+const NEUTRALS = ["white","off-white","cream","black","charcoal","grey","gray","navy","tan","beige","brown","camel","indigo","denim","stone","khaki"];
+const OCCS = ["work","casual","date","formal","sport","travel","lounge"];
+const SEASONS = ["spring","summer","fall","winter"];
+const OCC_FORMALITY = {work:[3,4], casual:[1,2], date:[2,4], formal:[4,5], travel:[1,3], sport:[1,2], lounge:[1,1]};
+
+function seedData(){
+  const g = (id,name,cat,colors,pattern,formality,warmth,seasons,occasions,extra)=>Object.assign(
+    {id,name,cat,colors,pattern,formality,warmth,seasons,occasions,fav:false,worn:0,score:0,status:"active",img:null,rain:false,price:null,lastWorn:null}, extra||{});
+  const all = SEASONS.slice();
+  const garments = [
+    g("g01","White tee","top",[{name:"white",hex:"#F2EFE6"}],"solid",1,1,["spring","summer"],["casual","sport","lounge"],{worn:24}),
+    g("g02","Breton stripe tee","top",[{name:"cream",hex:"#EFE8D8"},{name:"navy",hex:"#1F2A44"}],"stripe",2,1,["spring","summer"],["casual","travel","date"]),
+    g("g03","Rust linen shirt","top",[{name:"rust",hex:"#B7410E"}],"solid",2,1,["summer","spring"],["casual","date","travel"],{fav:true,worn:9}),
+    g("g04","White oxford shirt","top",[{name:"white",hex:"#F6F3EC"}],"solid",4,2,all,["work","formal","date"],{worn:17}),
+    g("g05","Navy merino crewneck","top",[{name:"navy",hex:"#1F2A44"}],"solid",3,3,["fall","winter","spring"],["work","casual","date"],{fav:true,worn:31}),
+    g("g06","Forest chunky knit","top",[{name:"forest",hex:"#2F4A35"}],"texture",2,4,["fall","winter"],["casual","date"],{worn:6}),
+    g("g07","Grey hoodie","top",[{name:"grey",hex:"#8A8A85"}],"solid",1,3,["fall","winter","spring"],["casual","sport","lounge"],{worn:22}),
+    g("g08","Dark indigo jeans","bottom",[{name:"indigo",hex:"#2B3A55"}],"solid",2,3,all,["casual","date","travel"],{worn:40}),
+    g("g09","Beige chinos","bottom",[{name:"beige",hex:"#C9B18C"}],"solid",3,2,["spring","summer","fall"],["work","casual","date"],{worn:14}),
+    g("g10","Charcoal wool trousers","bottom",[{name:"charcoal",hex:"#3B3B3B"}],"solid",4,3,["fall","winter"],["work","formal"],{worn:11}),
+    g("g11","Olive ripstop pants","bottom",[{name:"olive",hex:"#5A6242"}],"solid",2,2,["spring","summer","fall"],["casual","travel","sport"],{worn:8}),
+    g("g12","White leather sneakers","footwear",[{name:"white",hex:"#F1EEE7"}],"solid",2,2,all,["casual","travel","work","sport"],{worn:35}),
+    g("g13","Brown chelsea boots","footwear",[{name:"brown",hex:"#5C4033"}],"solid",3,3,["fall","winter","spring"],["work","casual","date"],{fav:true,worn:28}),
+    g("g14","Black derby shoes","footwear",[{name:"black",hex:"#1C1A18"}],"solid",5,2,all,["formal","work"],{worn:5}),
+    g("g15","Charcoal blazer","outerwear",[{name:"charcoal",hex:"#3F3D3B"}],"solid",4,2,all,["work","formal","date"],{worn:10}),
+    g("g16","Olive field jacket","outerwear",[{name:"olive",hex:"#56603F"}],"solid",2,3,["spring","fall"],["casual","travel"],{worn:13}),
+    g("g17","Camel overcoat","outerwear",[{name:"camel",hex:"#B98A4A"}],"solid",4,5,["winter"],["work","formal","date"],{fav:true,worn:7,price:220}),
+    g("g18","Navy raincoat","outerwear",[{name:"navy",hex:"#23304C"}],"solid",2,3,["spring","fall"],["casual","travel","work"],{rain:true,worn:9,price:95}),
+    g("g19","Black wrap dress","dress",[{name:"black",hex:"#211F1D"}],"solid",4,2,all,["date","formal","work"],{worn:4,price:90}),
+    g("g20","Floral midi dress","dress",[{name:"cream",hex:"#EFE4CC"},{name:"rust",hex:"#B7410E"}],"floral",3,1,["spring","summer"],["date","casual"],{worn:3,price:65}),
+    g("g21","Denim midi skirt","bottom",[{name:"denim",hex:"#3A4C6B"}],"solid",2,2,["spring","summer"],["casual","date"],{worn:5,price:40}),
+    g("g22","Tan leather belt","accessory",[{name:"tan",hex:"#B89B72"}],"solid",3,1,all,["work","casual","date","formal"],{worn:30,price:35}),
+    g("g23","Camel wool scarf","accessory",[{name:"camel",hex:"#B98A4A"}],"texture",3,4,["winter"],["work","casual","date"],{worn:6,price:30}),
+  ];
+  const prices = {g01:15,g02:25,g03:45,g04:60,g05:95,g06:70,g07:35,g08:80,g09:50,g10:90,g11:55,g12:85,g13:140,g14:110,g15:130,g16:75};
+  garments.forEach(it=>{ if(it.price==null && prices[it.id]) it.price = prices[it.id]; });
+  const d = n => { const t=new Date(); t.setDate(t.getDate()+n); return t.toISOString().slice(0,10); };
+  return {
+    garments,
+    outfits: [],
+    rejected: [],
+    wearLog: [],
+    trips: {},
+    onboarded: false,
+    events: [
+      {id:"e1", title:"Sara's wedding", type:"formal", date:d(21), end:null, dressCode:"cocktail", location:"Lakeside pavilion",
+        notes:"Outdoor ceremony at 4pm, cocktail dress code. Dinner reception after, then party until late."},
+      {id:"e2", title:"Lisbon trip", type:"travel", date:d(30), end:d(34), dressCode:"", location:"Lisbon",
+        notes:"Day 1: arrive, walk the old town, dinner by the river. Day 2: beach morning, museum after, night out in Bairro Alto. Day 3: client meeting, then casual dinner. Day 4: hike to the viewpoint, flight home."},
+    ],
+    profile: {
+      name:"You", undertone:"warm", depth:"medium", season:"Warm autumn", jewelry:"gold",
+      bodyType:"athletic",
+      bestColors:[{name:"rust",hex:"#B7410E"},{name:"olive",hex:"#5A6242"},{name:"camel",hex:"#B98A4A"},{name:"cream",hex:"#F1E6D0"},{name:"forest",hex:"#2F4A35"},{name:"mustard",hex:"#C99A2E"}],
+      avoidColors:[{name:"icy pink",hex:"#FFD1DC"},{name:"neon green",hex:"#39FF14"}],
+      stylePrefs:["smart casual","earth tones","minimalist"],
+      learned:"Prefers relaxed fits over slim cuts. Brown chelsea boots are a safe anchor — pairs them with almost everything. Monochrome and navy/olive combinations rate highly for work."
+    }
+  };
+}
+
+let db;
+try { db = JSON.parse(localStorage.getItem(LS_KEY)) || seedData(); }
+catch(e){ db = seedData(); }
+db.wearLog = db.wearLog || [];
+db.trips = db.trips || {};
+db.settings = Object.assign({apiKey:"", model:"claude-opus-4-8", lat:null, lon:null}, db.settings||{});
+db.presets = db.presets || [];
+db.wishlist = db.wishlist || [];
+db.pairs = db.pairs || {};
+db.chat = db.chat || [];
+db.garments.forEach(g=>{ if(!g.condition) g.condition="good"; if(g.care==null) g.care=""; });
+const save = () => localStorage.setItem(LS_KEY, JSON.stringify(db));
+const uid = () => Math.random().toString(36).slice(2,9);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+const fmtDate = iso => new Date(iso+"T12:00").toLocaleDateString(undefined,{month:"short",day:"numeric"});
+const isoOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+/* ---------- on-device photo heuristics (Claude vision in production) ---------- */
+const NAMED_COLORS = [["white","#F2EFE6"],["cream","#EFE4CC"],["beige","#C9B18C"],["tan","#B89B72"],["camel","#B98A4A"],["mustard","#C99A2E"],["yellow","#E3C53A"],["orange","#D2722A"],["rust","#B7410E"],["red","#B3322E"],["burgundy","#6E2230"],["pink","#D88FA5"],["purple","#6E4F8E"],["navy","#1F2A44"],["blue","#3A6EA5"],["light blue","#8FB3D1"],["teal","#2E6E6A"],["forest","#2F4A35"],["olive","#5A6242"],["green","#5C8A4E"],["brown","#5C4033"],["chocolate","#4A2F23"],["charcoal","#3B3B3B"],["grey","#8A8A85"],["black","#1E1C1A"],["denim","#2B3A55"],["stone","#B8AFA0"]];
+const hex2rgb = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+const rgb2hex = (r,g,b) => "#"+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("");
+function nearestColorName(hex){
+  const [r,g,b] = hex2rgb(hex); let best="grey", bd=1e9;
+  for(const [n,h] of NAMED_COLORS){ const [r2,g2,b2]=hex2rgb(h);
+    const d=(r-r2)**2+(g-g2)**2+(b-b2)**2; if(d<bd){bd=d;best=n;} }
+  return best;
+}
+function dominantColor(dataUrl){
+  return new Promise(res=>{
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const s=56, c=document.createElement("canvas"); c.width=s; c.height=s;
+        const x=c.getContext("2d"); x.drawImage(img,0,0,s,s);
+        const m=Math.floor(s*0.2), w=Math.floor(s*0.6);
+        const d=x.getImageData(m,m,w,w).data, buckets={};
+        for(let i=0;i<d.length;i+=4){
+          if(d[i+3]<200) continue;
+          const k=(d[i]>>5)+","+(d[i+1]>>5)+","+(d[i+2]>>5);
+          const u=buckets[k]=buckets[k]||[0,0,0,0];
+          u[0]+=d[i]; u[1]+=d[i+1]; u[2]+=d[i+2]; u[3]++;
+        }
+        let best=null;
+        for(const k in buckets) if(!best||buckets[k][3]>best[3]) best=buckets[k];
+        res(best? rgb2hex(best[0]/best[3],best[1]/best[3],best[2]/best[3]) : "#888888");
+      }catch(e){ res("#888888"); }
+    };
+    img.onerror = ()=>res("#888888");
+    img.src = dataUrl;
+  });
+}
+function sampleSkin(dataUrl){
+  return new Promise(res=>{
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const s=80, c=document.createElement("canvas"); c.width=s; c.height=s;
+        const x=c.getContext("2d"); x.drawImage(img,0,0,s,s);
+        const d=x.getImageData(Math.floor(s*0.3),Math.floor(s*0.25),Math.floor(s*0.4),Math.floor(s*0.4)).data;
+        let r=0,g=0,b=0,n=0;
+        for(let i=0;i<d.length;i+=4){
+          const R=d[i],G=d[i+1],B=d[i+2];
+          if(R>G && G>B*0.8 && R>60 && R-B>8){ r+=R; g+=G; b+=B; n++; }
+        }
+        if(n<20){ res(null); return; }
+        r/=n; g/=n; b/=n;
+        const Y=0.2126*r+0.7152*g+0.0722*b;
+        const depth = Y>190?"fair":Y>165?"light":Y>135?"medium":Y>105?"medium-deep":"deep";
+        const diff = r-b;
+        const undertone = diff>62?"warm":diff<38?"cool":"neutral";
+        res({hex:rgb2hex(r,g,b), depth, undertone});
+      }catch(e){ res(null); }
+    };
+    img.onerror = ()=>res(null);
+    img.src = dataUrl;
+  });
+}
+const PALETTES = {
+  "warm spring":{best:[["coral","#E8714D"],["golden yellow","#E3B23C"],["peach","#F2B279"],["warm green","#7BA05B"],["turquoise","#46B1A1"],["camel","#B98A4A"]],avoid:[["black","#1E1C1A"],["icy grey","#C9CED4"]]},
+  "warm autumn":{best:[["rust","#B7410E"],["olive","#5A6242"],["camel","#B98A4A"],["cream","#F1E6D0"],["mustard","#C99A2E"],["forest","#2F4A35"]],avoid:[["icy pink","#FFD1DC"],["fuchsia","#C9379D"]]},
+  "deep autumn":{best:[["chocolate","#4A2F23"],["burgundy","#6E2230"],["forest","#2F4A35"],["burnt orange","#B65A24"],["gold","#C99A2E"],["deep teal","#1F4F4A"]],avoid:[["pastel pink","#FFD1DC"],["icy blue","#BFD9EA"]]},
+  "light summer":{best:[["powder blue","#A9C6E0"],["soft pink","#E3B7C4"],["lavender","#B8A9D1"],["mint","#ABD3C0"],["rose","#C98A98"],["light grey","#C8C9CC"]],avoid:[["black","#1E1C1A"],["orange","#D2722A"]]},
+  "cool summer":{best:[["slate blue","#5B7BA5"],["raspberry","#A5365E"],["soft white","#F1F1EC"],["mauve","#9A7E9E"],["blue grey","#7E93A5"],["soft teal","#5E9A96"]],avoid:[["orange","#D2722A"],["mustard","#C99A2E"]]},
+  "cool winter":{best:[["black","#1E1C1A"],["pure white","#F6F6F4"],["royal blue","#2B4C9B"],["emerald","#0F7B5F"],["fuchsia","#C9379D"],["ice grey","#C9CED4"]],avoid:[["beige","#C9B18C"],["mustard","#C99A2E"]]},
+  "soft summer":{best:[["dusty rose","#C49AA0"],["sage","#9AA98C"],["slate","#6E7B8C"],["mauve","#9A7E9E"],["soft navy","#3A4A66"],["stone","#B8AFA0"]],avoid:[["neon green","#39FF14"],["orange","#D2722A"]]},
+  "soft autumn":{best:[["sage","#9AA98C"],["terracotta","#C06A4A"],["khaki","#A09468"],["salmon","#D98E73"],["moss","#6E7B4A"],["cream","#EFE4CC"]],avoid:[["fuchsia","#C9379D"],["icy blue","#BFD9EA"]]}
+};
+const HAIR_DEPTH = {black:"deep","dark brown":"medium-deep",brown:"medium","light brown":"light",blonde:"light",red:"medium",grey:"medium"};
+
+/* ---------- real services: live weather + optional Claude (BYO key) ---------- */
+function aiKey(){ return ((db.settings||{}).apiKey||"").trim(); }
+function imgBlock(dataUrl){
+  const m = dataUrl.match(/^data:(image\/[a-z+.-]+);base64,(.+)$/s);
+  return {type:"image", source:{type:"base64", media_type:m?m[1]:"image/jpeg", data:m?m[2]:dataUrl}};
+}
+async function claude(messages, opts){
+  opts = opts||{};
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "x-api-key": aiKey(),
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true",
+      "content-type":"application/json"
+    },
+    body: JSON.stringify({ model: db.settings.model||"claude-opus-4-8", max_tokens: opts.maxTokens||1500,
+      system: opts.system||undefined, messages })
+  });
+  if(!r.ok){ const t = await r.text(); throw new Error("Claude "+r.status+": "+t.slice(0,140)); }
+  const data = await r.json();
+  return data.content.filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+function extractJson(text){
+  const m = text.match(/```json\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+  return JSON.parse(m[1]||m[0]);
+}
+function catalogJson(){
+  return JSON.stringify(db.garments.filter(g=>g.status==="active").map(g=>({
+    id:g.id, name:g.name, cat:g.cat, colors:g.colors.map(c=>c.name), pattern:g.pattern,
+    formality:g.formality, warmth:g.warmth, seasons:g.seasons, occasions:g.occasions,
+    favorite:g.fav, times_worn:g.worn
+  })));
+}
+function profileBrief(){
+  const p = db.profile;
+  return `Undertone ${p.undertone}, depth ${p.depth}, color season "${p.season}". Best colors near face: ${p.bestColors.map(c=>c.name).join(", ")}. Avoid near face: ${p.avoidColors.map(c=>c.name).join(", ")}. Body type ${p.bodyType}. Style: ${p.stylePrefs.join(", ")}. Learned preferences: ${p.learned}`;
+}
+const pairKey = (a,b) => a<b ? a+"|"+b : b+"|"+a;
+function updatePairs(ids, delta){
+  for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++){
+    const k = pairKey(ids[i],ids[j]);
+    db.pairs[k] = Math.max(-4, Math.min(6, (db.pairs[k]||0)+delta));
+  }
+}
+function currentSeason(){
+  const m = new Date().getMonth();
+  return m<2||m===11 ? "winter" : m<5 ? "spring" : m<8 ? "summer" : "fall";
+}
+const WMO = c => c===0?"clear":c<=3?"partly cloudy":c<=48?"foggy":c<=67?"rainy":c<=77?"snowy":c<=82?"showers":"stormy";
+async function fetchWeather(){
+  const s = db.settings; if(s.lat==null) return null;
+  const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,precipitation_probability_max&forecast_days=1&timezone=auto`);
+  if(!r.ok) throw new Error("weather "+r.status);
+  const w = await r.json();
+  state.weather = { temp: Math.round(w.current.temperature_2m), label: WMO(w.current.weather_code),
+    high: Math.round(w.daily.temperature_2m_max[0]),
+    rain: (w.daily.precipitation_probability_max[0]||0) >= 45 };
+  state.temp = state.weather.temp; state.rain = state.weather.rain;
+  return state.weather;
+}
+function enableWeather(){
+  if(!navigator.geolocation){ alert("Geolocation unavailable in this browser."); return; }
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    db.settings.lat = +pos.coords.latitude.toFixed(3);
+    db.settings.lon = +pos.coords.longitude.toFixed(3);
+    save();
+    try{ await fetchWeather(); }catch(e){}
+    render();
+  }, ()=>alert("Couldn't get your location."));
+}
+async function weatherForTrip(locName, dates){
+  try{
+    if(!locName || !dates.length) return null;
+    const horizon = isoOf(new Date(Date.now()+15*86400000));
+    if(dates[0] > horizon) return null;
+    const g = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(locName)}&count=1`)).json();
+    if(!g.results || !g.results.length) return null;
+    const last = dates[dates.length-1] <= horizon ? dates[dates.length-1] : horizon;
+    const f = await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${g.results[0].latitude}&longitude=${g.results[0].longitude}&daily=temperature_2m_max,precipitation_probability_max&start_date=${dates[0]}&end_date=${last}&timezone=auto`)).json();
+    const map = {};
+    (f.daily.time||[]).forEach((d,i)=>{ map[d] = {temp:Math.round(f.daily.temperature_2m_max[i]), rain:(f.daily.precipitation_probability_max[i]||0)>=45}; });
+    return map;
+  }catch(e){ return null; }
+}
+function wrapText(x, text, bx, by, maxW, lh){
+  const words = String(text).split(" "); let line = "", yy = by;
+  for(const w of words){
+    if(x.measureText(line+w).width > maxW && line){ x.fillText(line.trim(), bx, yy); line = w+" "; yy += lh; }
+    else line += w+" ";
+  }
+  x.fillText(line.trim(), bx, yy);
+}
+function shareOutfit(ids, title){
+  const items = ids.map(id=>db.garments.find(g=>g.id===id)).filter(Boolean);
+  if(!items.length) return;
+  const c = document.createElement("canvas"); c.width = 900; c.height = 520;
+  const x = c.getContext("2d");
+  x.fillStyle = "#F7F4EE"; x.fillRect(0,0,900,520);
+  x.fillStyle = "#221D16"; x.font = "500 38px Georgia, serif"; x.fillText(title, 48, 84);
+  x.font = "15px system-ui"; x.fillStyle = "#6E665B";
+  x.fillText(new Date().toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}), 48, 114);
+  const n = items.length, bw = Math.min(180, (900-96-(n-1)*20)/n);
+  items.forEach((g,i)=>{
+    const bx = 48 + i*(bw+20);
+    x.fillStyle = g.colors[0] ? g.colors[0].hex : "#999";
+    x.beginPath(); x.roundRect(bx, 150, bw, 200, 16); x.fill();
+    if(g.colors[1]){ x.fillStyle = g.colors[1].hex; x.beginPath(); x.roundRect(bx, 310, bw, 40, [0,0,16,16]); x.fill(); }
+    x.fillStyle = "#221D16"; x.font = "600 15px system-ui";
+    wrapText(x, g.name, bx, 380, bw, 19);
+    x.fillStyle = "#6E665B"; x.font = "12px system-ui"; x.fillText(g.cat, bx, 436);
+  });
+  x.fillStyle = "#A6491F"; x.font = "500 26px Georgia, serif"; x.fillText("wodrobe", 48, 486);
+  c.toBlob(b=>{
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+    a.download = String(title).replace(/[^a-z0-9]+/gi,"-").toLowerCase()+".png";
+    a.click(); URL.revokeObjectURL(a.href);
+  }, "image/png");
+}
+
+const state = { view:"dashboard", filter:"all", search:"", occ:"work", temp:14, rain:false, options:[], pendingImg:null,
+  uploadQueue:[], uploadTotal:0, currentImg:null, wiz:null, pendingFiles:[], calOffset:0,
+  scope:"all", generating:false, aiError:null, weather:null, chatBusy:false };
+
+/* ---------- visuals: whole-garment artwork ---------- */
+let artSeq = 0;
+const shadeHex = (hex,f) => { const [r,g,b] = hex2rgb(hex); return rgb2hex(r*f, g*f, b*f); };
+const tintHex = (hex,t) => { const [r,g,b] = hex2rgb(hex); return rgb2hex(r+(255-r)*t, g+(255-g)*t, b+(255-b)*t); };
+function garmentArt(g){
+  const c0 = g.colors[0] ? g.colors[0].hex : "#999";
+  const c1 = g.colors[1] ? g.colors[1].hex : c0;
+  const pid = "p" + g.id + (artSeq++);
+  const dk = shadeHex(c0, 0.66), dk2 = shadeHex(c0, 0.45), lt = tintHex(c0, 0.32);
+  let fill = c0, defs = "";
+  if(g.pattern==="stripe" && g.colors[1]){
+    defs = `<pattern id="${pid}" width="12" height="12" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${c0}"/><rect width="6" height="12" fill="${c1}"/></pattern>`;
+    fill = `url(#${pid})`;
+  } else if(g.pattern==="texture"){
+    defs = `<pattern id="${pid}" width="7" height="5" patternUnits="userSpaceOnUse"><rect width="7" height="5" fill="${c0}"/><path d="M0 2.5 Q1.75 1 3.5 2.5 Q5.25 4 7 2.5" stroke="${tintHex(c0,.14)}" stroke-width="1.3" fill="none"/></pattern>`;
+    fill = `url(#${pid})`;
+  } else if(g.pattern==="floral"){
+    defs = `<pattern id="${pid}" width="15" height="15" patternUnits="userSpaceOnUse"><rect width="15" height="15" fill="${c0}"/><circle cx="4" cy="4" r="2" fill="${c1}"/><circle cx="4" cy="4" r=".8" fill="${shadeHex(c1,.6)}"/><circle cx="11.5" cy="10.5" r="1.4" fill="${c1}"/><path d="M8 13 q1.5 -2 3 0" stroke="${c1}" stroke-width=".8" fill="none"/></pattern>`;
+    fill = `url(#${pid})`;
+  }
+  defs += `<linearGradient id="sg${pid}" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ffffff" stop-opacity="0.15"/>
+    <stop offset="0.38" stop-color="#ffffff" stop-opacity="0"/>
+    <stop offset="0.68" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="1" stop-color="#000000" stop-opacity="0.22"/>
+  </linearGradient>`;
+  const sh = `url(#sg${pid})`;
+  const S = d => `<path d="${d}" fill="${fill}"/><path d="${d}" fill="${sh}"/>`;
+  const name = (g.name||"").toLowerCase();
+  const TEE = "M34 24 L44 18.5 Q50 26 56 18.5 L66 24 L80 33 L73.5 45 L66.5 40.5 L66.5 85 Q66.5 87.5 64 87.5 H36 Q33.5 87.5 33.5 85 L33.5 40.5 L26.5 45 L20 33 Z";
+  const LSL = "M33 25 L43.5 19 Q50 26.5 56.5 19 L67 25 L79 32.5 L83.5 61 Q84.2 66 79.5 65.2 L70 63.5 V86.5 Q70 89 67 89 H33 Q30 89 30 86.5 V63.5 L20.5 65.2 Q15.8 66 16.5 61 L21 32.5 Z";
+  const COAT = "M32 24 L43 17.5 L50 24 L57 17.5 L68 24 L80.5 32 L85 64 Q85.7 69 80.8 68.2 L71 66.5 V90.5 Q71 93 68 93 H32 Q29 93 29 90.5 V66.5 L19.2 68.2 Q14.3 69 15 64 L19.5 32 Z";
+  const seamL = `<path d="M30 40 V63 M70 40 V63" stroke="${dk}" stroke-width="1.2" fill="none" opacity=".55"/>`;
+  let body = "";
+  if(g.cat==="top"){
+    if(/hoodie/.test(name)){
+      body = `<path d="M39.5 23 Q50 11 60.5 23 Q56 29 50 29.5 Q44 29 39.5 23 Z" fill="${dk}"/>`
+        + S(LSL) + seamL
+        + `<path d="M43 20.5 Q50 27.5 57 20.5 Q54 30 50 30.5 Q46 30 43 20.5 Z" fill="${dk2}" opacity=".9"/>
+        <path d="M47 30 q-1 5 -.5 9 M53 30 q1 5 .5 9" stroke="${dk2}" stroke-width="1.3" fill="none"/>
+        <circle cx="46.5" cy="40" r="1" fill="${dk2}"/><circle cx="53.5" cy="40" r="1" fill="${dk2}"/>
+        <path d="M38.5 64 L43 58.5 H57 L61.5 64 V79 H38.5 Z" fill="rgba(0,0,0,.10)" stroke="${dk}" stroke-width="1.2"/>
+        <path d="M33 85 H67" stroke="${dk}" stroke-width="1.2" opacity=".6"/>`;
+    } else if(/shirt|oxford|polo|blouse/.test(name) && g.formality>=3){
+      body = S(LSL) + seamL
+        + `<path d="M33 28 Q50 32 67 28" stroke="${dk}" stroke-width="1" fill="none" opacity=".45"/>
+        <rect x="48.7" y="27" width="2.6" height="59" fill="${dk}" opacity=".3"/>
+        ${[36,46,56,66,76].map(y=>`<circle cx="50" cy="${y}" r="1.15" fill="${dk2}"/>`).join("")}
+        <path d="M43.5 19 L50 28.5 L42 25.5 Z" fill="${dk}"/>
+        <path d="M56.5 19 L50 28.5 L58 25.5 Z" fill="${dk}"/>
+        <rect x="36.5" y="37" width="9" height="10" rx="1" fill="none" stroke="${dk}" stroke-width="1" opacity=".6"/>
+        <path d="M18 60.5 L29.5 59 M82 60.5 L70.5 59" stroke="${dk}" stroke-width="1.4" opacity=".7"/>`;
+    } else if(g.warmth>=3 || /sweater|knit|crewneck|merino|fleece/.test(name)){
+      const ribH = Array.from({length:10},(_,k)=>`M${34.5+k*3.4} 84 V88.5`).join(" ");
+      const ribC = Array.from({length:4},(_,k)=>`M${18+k*3} 59.5 L${18.6+k*3} 64.5 M${82-k*3} 59.5 L${81.4-k*3} 64.5`).join(" ");
+      body = S(LSL) + seamL
+        + `<path d="M43.5 19 Q50 26.5 56.5 19" fill="none" stroke="${dk}" stroke-width="3"/>
+        <path d="M44.5 21.5 Q50 27.5 55.5 21.5" fill="none" stroke="${lt}" stroke-width="1"/>
+        <path d="${ribH}" stroke="${dk}" stroke-width="1" opacity=".55" fill="none"/>
+        <path d="${ribC}" stroke="${dk}" stroke-width="1" opacity=".55" fill="none"/>
+        <path d="M42 34 Q41 55 42.5 78 M58 34 Q59 55 57.5 78" stroke="${dk}" stroke-width="1.4" fill="none" opacity=".2"/>`;
+    } else {
+      body = S(TEE)
+        + `<path d="M44 18.5 Q50 26 56 18.5" fill="none" stroke="${dk}" stroke-width="2.6"/>
+        <path d="M45.3 20 Q50 25.5 54.7 20" fill="none" stroke="${lt}" stroke-width=".9"/>
+        <path d="M23.5 34.5 L29 43 M76.5 34.5 L71 43" stroke="${dk}" stroke-width="1.3" opacity=".7"/>
+        <path d="M35.5 84 H64.5" stroke="${dk}" stroke-width="1.2" opacity=".7"/>
+        <path d="M41.5 48 Q40.5 64 41.5 80 M58.5 48 Q59.5 64 58.5 80" stroke="${dk}" stroke-width="1.3" fill="none" opacity=".2"/>`;
+    }
+  } else if(g.cat==="dress"){
+    const DR = "M39 16 L46.5 12.5 Q50 18 53.5 12.5 L61 16 L64.5 24 L60.5 40.5 Q59.7 44 61.3 47.5 L70.6 81.5 Q71.8 86.5 66.8 86.5 H33.2 Q28.2 86.5 29.4 81.5 L38.7 47.5 Q40.3 44 39.5 40.5 L35.5 24 Z";
+    body = S(DR)
+      + `<path d="M46.5 12.5 Q50 18 53.5 12.5" fill="none" stroke="${dk}" stroke-width="2.2"/>
+      <path d="M40.2 44.5 Q50 47 59.8 44.5" stroke="${dk}" stroke-width="1.3" fill="none" opacity=".8"/>
+      <path d="M45.5 50 L43 84 M54.5 50 L57 84 M50 48.5 V85" stroke="${dk}" stroke-width="1.1" fill="none" opacity=".25"/>
+      <path d="M30.8 82.5 Q50 86.8 69.2 82.5" stroke="${dk}" stroke-width="1.2" fill="none" opacity=".7"/>
+      <path d="M37.5 20 L42 38 M62.5 20 L58 38" stroke="${dk}" stroke-width="1" fill="none" opacity=".3"/>`;
+  } else if(g.cat==="bottom" && /skirt/.test(name)){
+    const SK = "M36 16 H64 Q65.6 16 65.8 17.6 L74 78.5 Q74.7 82.5 70.4 82.5 H29.6 Q25.3 82.5 26 78.5 L34.2 17.6 Q34.4 16 36 16 Z";
+    const stitch = /denim|jean/.test(name) ? "#C8A35F" : dk;
+    body = S(SK)
+      + `<path d="M34.8 22.5 H65.2" stroke="${dk}" stroke-width="2"/>
+      <circle cx="50" cy="19.3" r="1.2" fill="${dk2}"/>
+      <path d="M43.5 23 L40.5 81 M56.5 23 L59.5 81" stroke="${stitch}" stroke-width=".9" opacity=".65"/>
+      <path d="M27.5 79 H72.5" stroke="${dk}" stroke-width="1.2" opacity=".7"/>
+      <path d="M50 23 V34" stroke="${stitch}" stroke-width="1" opacity=".7"/>`;
+  } else if(g.cat==="bottom"){
+    const PT = "M34 14 H66 Q67.6 14 67.7 15.8 L71.6 84.5 Q71.8 87.5 69 87.5 H58.6 Q56.6 87.5 56.3 85.5 L50.9 46.5 Q50 43.8 49.1 46.5 L43.7 85.5 Q43.4 87.5 41.4 87.5 H31 Q28.2 87.5 28.4 84.5 L32.3 15.8 Q32.4 14 34 14 Z";
+    const isJean = /jean|denim|indigo/.test(name);
+    const stitch = isJean ? "#C9A35F" : dk;
+    const loops = [35.5,43,50,57,64.5].map(x=>`M${x} 14.3 V19.6`).join(" ");
+    body = S(PT)
+      + `<path d="M33.4 20.3 H66.6" stroke="${dk}" stroke-width="1.6"/>
+      ${isJean?`<path d="M33.6 22 H66.4" stroke="${stitch}" stroke-width=".7" opacity=".9"/>`:""}
+      <path d="${loops}" stroke="${dk}" stroke-width="2" opacity=".55"/>
+      <circle cx="50" cy="17.2" r="1.3" fill="${dk2}"/>
+      <path d="M50 20.3 Q48.8 26.5 49.6 32.5" stroke="${dk}" stroke-width="1.1" fill="none" opacity=".75"/>
+      <path d="M33.8 22.5 Q40.5 30 43.6 36.5 M66.2 22.5 Q59.5 30 56.4 36.5" stroke="${stitch}" stroke-width="1" fill="none" opacity=".8"/>
+      <path d="M37.8 42 L35 83.5 M62.2 42 L65 83.5" stroke="${dk}" stroke-width="1.2" fill="none" opacity=".22"/>
+      <path d="M29.6 83.5 H43.2 M56.8 83.5 H70.4" stroke="${dk}" stroke-width="1.2" opacity=".7"/>`;
+  } else if(g.cat==="outerwear"){
+    if(/blazer|suit/.test(name)){
+      body = S(COAT) + seamL
+        + `<path d="M50 30 V92" stroke="${dk}" stroke-width="1.6"/>
+        <path d="M43 17.5 L50 30 L43.5 34 L38.5 24 Z" fill="${dk}"/>
+        <path d="M57 17.5 L50 30 L56.5 34 L61.5 24 Z" fill="${dk}"/>
+        <circle cx="52.6" cy="52" r="1.4" fill="${dk2}"/><circle cx="52.6" cy="62" r="1.4" fill="${dk2}"/>
+        <rect x="33" y="60" width="11" height="4" rx="1" fill="${dk}" opacity=".5"/>
+        <rect x="56" y="60" width="11" height="4" rx="1" fill="${dk}" opacity=".5"/>
+        <rect x="36" y="34" width="7" height="2.6" rx="1" fill="${dk}" opacity=".4"/>`;
+    } else if(g.rain || /rain/.test(name)){
+      body = `<path d="M39 22 Q50 9.5 61 22 Q56.5 28.5 50 29 Q43.5 28.5 39 22 Z" fill="${dk}"/>`
+        + S(COAT) + seamL
+        + `<path d="M50 29 V92" stroke="${dk}" stroke-width="2.2"/>
+        ${Array.from({length:14},(_,k)=>`<path d="M48.9 ${31+k*4.3} h2.2" stroke="${lt}" stroke-width="1" opacity=".8"/>`).join("")}
+        <path d="M34 50 H45 M55 50 H66" stroke="${dk}" stroke-width="1.2" opacity=".6"/>
+        <rect x="33.5" y="62" width="10" height="9" rx="1.5" fill="none" stroke="${dk}" stroke-width="1.1" opacity=".7"/>
+        <rect x="56.5" y="62" width="10" height="9" rx="1.5" fill="none" stroke="${dk}" stroke-width="1.1" opacity=".7"/>`;
+    } else if(g.warmth>=4 || /overcoat|trench|coat/.test(name)){
+      body = S(COAT) + seamL
+        + `<path d="M43 17.5 L50 31 L44 34.5 L39 25 Z" fill="${dk}"/>
+        <path d="M57 17.5 L50 31 L56 34.5 L61 25 Z" fill="${dk}"/>
+        <path d="M50 31 V92" stroke="${dk}" stroke-width="1.6"/>
+        <circle cx="45.5" cy="46" r="1.5" fill="${dk2}"/><circle cx="54.5" cy="46" r="1.5" fill="${dk2}"/>
+        <circle cx="45.5" cy="57" r="1.5" fill="${dk2}"/><circle cx="54.5" cy="57" r="1.5" fill="${dk2}"/>
+        <path d="M31 66 H69" stroke="${dk}" stroke-width="3" opacity=".55"/>
+        <rect x="46" y="63.5" width="8" height="5" rx="1" fill="none" stroke="${dk2}" stroke-width="1.3"/>
+        <rect x="32.5" y="72" width="10" height="3.5" rx="1" fill="${dk}" opacity=".5"/>
+        <rect x="57.5" y="72" width="10" height="3.5" rx="1" fill="${dk}" opacity=".5"/>`;
+    } else {
+      body = S(COAT) + seamL
+        + `<path d="M42 19 H58 L56 25 H44 Z" fill="${dk}" opacity=".85"/>
+        <path d="M50 25 V92" stroke="${dk}" stroke-width="2"/>
+        ${Array.from({length:15},(_,k)=>`<path d="M48.9 ${27+k*4.3} h2.2" stroke="${lt}" stroke-width="1" opacity=".75"/>`).join("")}
+        <rect x="33" y="36" width="11" height="10" rx="1.5" fill="none" stroke="${dk}" stroke-width="1.1" opacity=".75"/>
+        <rect x="56" y="36" width="11" height="10" rx="1.5" fill="none" stroke="${dk}" stroke-width="1.1" opacity=".75"/>
+        <rect x="32" y="63" width="13" height="12" rx="1.5" fill="none" stroke="${dk}" stroke-width="1.1" opacity=".75"/>
+        <rect x="55" y="63" width="13" height="12" rx="1.5" fill="none" stroke="${dk}" stroke-width="1.1" opacity=".75"/>
+        <path d="M29 87 H71" stroke="${dk}" stroke-width="1.3" opacity=".6"/>`;
+    }
+  } else if(g.cat==="footwear"){
+    const [r0,g0,b0] = hex2rgb(c0);
+    const lum = .2126*r0 + .7152*g0 + .0722*b0;
+    const ln  = lum<75 ? tintHex(c0,.38) : dk;
+    const ln2 = lum<75 ? tintHex(c0,.55) : dk2;
+    const soleC = lum<75 ? tintHex(c0,.2) : shadeHex(c0,.82);
+    const soleD = lum<75 ? tintHex(c0,.32) : dk2;
+    const ground = `<ellipse cx="51" cy="82.5" rx="35" ry="3.2" fill="#000" opacity=".12"/>`;
+    if(/boot|chelsea/.test(name)){
+      const BT = "M57.5 17 Q57.5 14.5 60 14.5 H77.5 Q80 14.5 80.1 17 L80.8 49 Q81 53 82.8 56.5 Q85.7 62 85.9 68 L86 70.2 H14.6 Q13 64.5 17 60 Q21.5 55 31 53.4 L43.5 51.2 Q51.5 49.8 54.5 44.5 Q56.5 40.5 56.8 32 L57.5 17 Z";
+      body = ground + S(BT)
+        + `<rect x="73.2" y="9.6" width="4.4" height="7.4" rx="2" fill="${ln}"/>
+        <path d="M59 16 H79" stroke="${ln}" stroke-width="1.4" opacity=".8"/>
+        <path d="M62 18.5 H71.5 L69.2 38 H63.8 Z" fill="${ln2}" opacity=".85"/>
+        <path d="M64.2 19.5 V37 M66.6 19.5 V37.4 M69 19.5 V37" stroke="${lum<75? c0 : lt}" stroke-width=".9" opacity=".9"/>
+        <path d="M56.6 40.5 Q66 44.5 80.9 45.5" stroke="${ln}" stroke-width=".9" stroke-dasharray="2.2 1.8" fill="none" opacity=".75"/>
+        <path d="M31 53.6 Q36 59.5 34.8 69.5" stroke="${ln}" stroke-width=".9" stroke-dasharray="2.2 1.8" fill="none" opacity=".75"/>
+        <path d="M16.5 68.2 H85.5" stroke="${ln}" stroke-width=".9" stroke-dasharray="2.2 1.8" opacity=".65"/>
+        <path d="M14.4 70.2 H86 Q87.7 70.2 87.4 72.8 Q87 75.6 83.4 75.7 H18.6 Q14.9 75.5 14.4 72.4 Z" fill="${soleD}"/>
+        <rect x="67.5" y="75.6" width="18" height="6.4" rx="1.6" fill="${soleD}"/>
+        <rect x="17.5" y="75.6" width="35" height="3.6" rx="1.6" fill="${soleD}" opacity=".95"/>`;
+    } else if(/sneaker|trainer|running|tennis/.test(name) || g.formality<=2){
+      const SN = "M14.5 67 Q13.5 60 19 56.5 Q26 52.5 34 51 L48 48 Q50 41.5 56 40.5 L60 40.5 Q63 40.5 64 43 L66 47 Q69.5 44 75 44.5 Q83 45.5 85.5 53 Q87.5 59 87.5 67 Z";
+      body = ground + S(SN)
+        + `<path d="M14.5 67 Q13.5 60 19 56.5 Q26 52.5 34 51 Q38.2 58.5 36.6 67 Z" fill="${ln}" opacity=".14"/>
+        <path d="M33.6 51.3 Q37.9 58.5 36.4 66.6" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".8"/>
+        <path d="M46 49 L62.5 44.4 L64.8 48.8 L48.5 53.6 Z" fill="${ln}" opacity=".16"/>
+        <path d="M48.2 52.7 L54.2 48.3 M52.2 51.5 L58.2 47.1 M56.2 50.2 L62.2 45.9" stroke="${ln}" stroke-width="1.5" opacity=".9"/>
+        <circle cx="48.9" cy="51.6" r=".85" fill="${ln2}"/><circle cx="52.9" cy="50.3" r=".85" fill="${ln2}"/><circle cx="56.9" cy="49" r=".85" fill="${ln2}"/><circle cx="60.9" cy="47.7" r=".85" fill="${ln2}"/>
+        <path d="M50.5 42.5 Q56 40.8 62.8 43.2" stroke="${lum<75? ln : lt}" stroke-width="1.1" fill="none" opacity=".8"/>
+        <path d="M66 47 Q70 44.2 75 44.6 Q80.5 45.2 83.8 50.5" stroke="${ln}" stroke-width="2" fill="none" opacity=".55"/>
+        <rect x="78.6" y="41.6" width="5.2" height="3.6" rx="1.7" fill="${ln}" opacity=".85"/>
+        <path d="M75.5 45 Q78.8 55 78.4 66.5" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".7"/>
+        <path d="M64.5 49.5 Q70.5 52.5 76 60.5" stroke="${ln}" stroke-width=".8" stroke-dasharray="2 1.6" fill="none" opacity=".55"/>
+        <path d="M13.8 67 H87.6 Q89 67 88.8 69.8 Q88.4 74.4 82.8 74.7 Q49 76.6 19.8 74.8 Q13.9 74.4 13.6 69.6 Q13.5 67 13.8 67 Z" fill="${soleC}"/>
+        <path d="M15.2 74.3 Q49 77.2 84 74.4" stroke="${soleD}" stroke-width="2.4" fill="none"/>
+        ${Array.from({length:9},(_,k)=>`<path d="M${21+k*7.4} 75 v2.2" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>`).join("")}`;
+    } else {
+      const DB = "M14.8 68.5 Q14 63 19.5 60 Q25 57.2 33 56 L46.5 54 Q49.5 48.8 55.5 48.2 Q60.5 47.8 62.5 50.5 L64.8 54.5 Q74 55.6 81 59.2 Q86 61.8 86.3 67 L86.4 69.7 H15 Z";
+      body = ground + S(DB)
+        + `<path d="M33 56.2 Q37.2 62 36.2 69.2" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".85"/>
+        <circle cx="34.4" cy="58.8" r=".6" fill="${ln}"/><circle cx="35.5" cy="61.6" r=".6" fill="${ln}"/><circle cx="36" cy="64.4" r=".6" fill="${ln}"/><circle cx="36" cy="67.2" r=".6" fill="${ln}"/>
+        <path d="M52 50.6 L62.6 50.9 L64.6 54.7 L53.4 55.9 Z" fill="${ln}" opacity=".18"/>
+        <path d="M53.6 52.5 L61.6 52.2 M53.2 54.4 L62.2 54.1" stroke="${ln}" stroke-width="1.3" opacity=".9"/>
+        <circle cx="54" cy="52.4" r=".7" fill="${ln2}"/><circle cx="61.2" cy="52.1" r=".7" fill="${ln2}"/><circle cx="53.6" cy="54.3" r=".7" fill="${ln2}"/><circle cx="61.8" cy="54" r=".7" fill="${ln2}"/>
+        <path d="M50 49.3 Q55.5 47.6 61 49" stroke="${lum<75? ln : lt}" stroke-width="1" fill="none" opacity=".75"/>
+        <path d="M72.5 56.8 Q76.8 62 76.3 69.4" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".7"/>
+        <path d="M16.8 67.8 H85.2" stroke="${ln}" stroke-width=".8" stroke-dasharray="2.4 2" opacity=".6"/>
+        <path d="M15 69.7 H86.4 Q87.7 69.8 87.4 71.9 Q87.1 73.8 84 73.9 H18 Q15.2 73.7 15 71.7 Z" fill="${soleD}"/>
+        <rect x="68.5" y="73.8" width="16" height="5" rx="1.3" fill="${soleD}"/>`;
+    }
+  } else {
+    if(/belt/.test(name)){
+      const metal = (db.profile && db.profile.jewelry==="silver") ? "#A9AFB8" : "#C2912E";
+      const band = "M14 62 Q30 40 50 48 Q70 56 82 45";
+      body = `<path d="${band}" fill="none" stroke="${fill}" stroke-width="11" stroke-linecap="round"/>
+      <path d="${band}" fill="none" stroke="${dk}" stroke-width="11" stroke-linecap="round" opacity=".15"/>
+      <path d="${band}" fill="none" stroke="${dk}" stroke-width=".9" stroke-dasharray="3 3" opacity=".8"/>
+      <path d="M16.5 59.8 Q31 41.5 49 50" fill="none" stroke="${lt}" stroke-width="1" opacity=".5"/>
+      <circle cx="22" cy="56" r="1.1" fill="${dk2}"/><circle cx="27" cy="51.5" r="1.1" fill="${dk2}"/><circle cx="32.5" cy="48.2" r="1.1" fill="${dk2}"/>
+      <rect x="76" y="36.5" width="13" height="17" rx="3.5" fill="none" stroke="${metal}" stroke-width="3"/>
+      <path d="M82.5 38 V52" stroke="${metal}" stroke-width="2"/>`;
+    } else if(/scarf/.test(name)){
+      const LOOP = "M38 22 Q50 13.5 62 22 Q66.5 26.5 64 32.5 Q58 40.5 50 40.8 Q42 40.5 36 32.5 Q33.5 26.5 38 22 Z";
+      body = S(LOOP)
+        + `<path d="M41.5 36 L36.5 76 Q36 79 39 79 H46.5 Q49.3 79 48.8 76 L47.5 38.5 Z" fill="${fill}"/>
+        <path d="M41.5 36 L36.5 76 Q36 79 39 79 H46.5 Q49.3 79 48.8 76 L47.5 38.5 Z" fill="${sh}"/>
+        <path d="M58.5 36 L63.5 69 Q64 72 61 72 H53.5 Q50.7 72 51.2 69 L52.5 38.5 Z" fill="${fill}"/>
+        <path d="M58.5 36 L63.5 69 Q64 72 61 72 H53.5 Q50.7 72 51.2 69 L52.5 38.5 Z" fill="${sh}"/>
+        ${Array.from({length:5},(_,k)=>`<path d="M${38+k*2.3} 79 v4.5" stroke="${dk}" stroke-width="1.1"/>`).join("")}
+        ${Array.from({length:5},(_,k)=>`<path d="M${52.7+k*2.3} 72 v4.5" stroke="${dk}" stroke-width="1.1"/>`).join("")}
+        <path d="M40 24.5 Q50 18.5 60 24.5 M38.5 29 Q50 22 61.5 29" stroke="${dk}" stroke-width="1" fill="none" opacity=".4"/>`;
+    } else {
+      body = `<path d="M37 41 Q37 25 50 25 Q63 25 63 41" fill="none" stroke="${dk}" stroke-width="4.5"/>
+      <path d="M37 41 Q37 27 50 27 Q63 27 63 41" fill="none" stroke="${fill}" stroke-width="2.2"/>
+      ${S("M27 40 Q27 38 29 38 H71 Q73 38 73 40 V76 Q73 82 67 82 H33 Q27 82 27 76 Z")}
+      <path d="M27 41 Q27 38 30 38 H70 Q73 38 73 41 V50 Q73 53 70 53 H30 Q27 53 27 50 Z" fill="${dk}" opacity=".35"/>
+      <rect x="45.5" y="49" width="9" height="6.5" rx="2" fill="none" stroke="${dk2}" stroke-width="2"/>
+      <path d="M29.5 57 H70.5" stroke="${dk}" stroke-width=".9" stroke-dasharray="2.5 2.5" opacity=".6"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:78%;height:86%;display:block;margin:auto"><defs>${defs}</defs>${body}</svg>`;
+}
+function swatchDiv(g, cls, inner=""){
+  if(g.img) return `<div class="${cls}" style="background-image:url('${g.img}');background-size:cover;background-position:center">${inner}</div>`;
+  return `<div class="${cls}" style="background:var(--chip);display:flex">${garmentArt(g)}${inner}</div>`;
+}
+function itemCard(g){
+  return `<div class="item-card" data-act="open-garment" data-id="${g.id}">
+    ${swatchDiv(g, "swatch", g.fav?'<div class="fav">&#9733;</div>':"")}
+    <div class="item-meta">
+      <div class="nm">${esc(g.name)}</div>
+      <div class="tags">
+        <span class="chip">${esc(g.cat)}</span>
+        <span class="chip">F${g.formality}&middot;W${g.warmth}</span>
+        ${g.worn?`<span class="chip">${g.worn}&times; worn</span>`:""}
+        ${g.condition==="needs repair"?'<span class="chip" style="color:var(--bad)">repair</span>':""}
+      </div>
+    </div></div>`;
+}
+function tile(g, role){
+  return `<div class="opt-tile">${swatchDiv(g, "sw")}
+    <div class="role">${esc(role)}</div><div class="nm">${esc(g.name)}</div></div>`;
+}
+function colorChip(c, act, idx){
+  return `<span class="chip"><span class="dot" style="background:${c.hex}"></span>${esc(c.name)}${act?`<button data-act="${act}" data-i="${idx}">&times;</button>`:""}</span>`;
+}
+
+/* ---------- views ---------- */
+function wardrobeGaps(){
+  const a = db.garments.filter(g=>g.status==="active");
+  const gaps = [];
+  if(!a.some(g=>g.rain)) gaps.push("a rain layer");
+  if(!a.some(g=>g.cat==="outerwear" && g.warmth>=4)) gaps.push("a proper winter coat");
+  if(!a.some(g=>g.cat==="footwear" && g.formality>=4)) gaps.push("formal shoes");
+  if(!a.some(g=>(g.cat==="top"||g.cat==="dress") && g.formality>=4)) gaps.push("a formal top or dress");
+  if(!a.some(g=>(g.cat==="top"||g.cat==="dress") && g.warmth===1)) gaps.push("lightweight summer pieces");
+  if(a.filter(g=>g.occasions.includes("sport")).length<2) gaps.push("activewear");
+  return gaps;
+}
+function startSteps(){
+  const items = db.garments.filter(g=>g.status==="active").length;
+  return [
+    {ok: !!(db.profile && db.profile.season), label:"Run your color &amp; body analysis", act:"wiz-start", btn:"Run"},
+    {ok: items>=8, label:"Build your wardrobe (8+ items)", act:"add-garment", btn:"Add"},
+    {ok: db.outfits.length>0 || db.wearLog.length>0, label:"Save your first look", act:"nav", v:"dress", btn:"Dress me"},
+  ];
+}
+function logStreak(){
+  const dates = new Set(db.wearLog.map(l=>l.date));
+  let n = 0, d = new Date();
+  if(!dates.has(isoOf(d))) d = new Date(d.getTime()-86400000);
+  while(dates.has(isoOf(d))){ n++; d = new Date(d.getTime()-86400000); }
+  return n;
+}
+function todaysPick(){
+  const day = new Date().getDay();
+  const occ = (day===0||day===6) ? "casual" : "work";
+  const {combos} = buildCombos(occ, state.temp, state.rain, null, "all");
+  return combos.length ? {occ, items:combos[0].items} : null;
+}
+function viewDashboard(){
+  const active = db.garments.filter(g=>g.status==="active");
+  const wears = db.garments.reduce((a,g)=>a+(g.worn||0),0);
+  const todayIso = isoOf(new Date());
+  const up = db.events.slice().sort((a,b)=>a.date.localeCompare(b.date)).filter(e=>e.date>=todayIso).slice(0,3);
+  const todayEvents = db.events.filter(e=>e.date===todayIso || (e.end && e.date<=todayIso && e.end>=todayIso));
+  const most = db.garments.slice().sort((a,b)=>(b.worn||0)-(a.worn||0)).slice(0,4);
+  const wornOnce = active.filter(g=>(g.worn||0)>0).length;
+  const util = active.length ? Math.round(wornOnce/active.length*100) : 0;
+  const value = active.reduce((a,g)=>a+(g.price||0),0);
+  const cpw = active.filter(g=>g.price && g.worn).map(g=>({g, v:g.price/g.worn})).sort((a,b)=>a.v-b.v);
+  const neglected = active.slice().sort((a,b)=>(a.worn||0)-(b.worn||0)).slice(0,4);
+  const gaps = wardrobeGaps();
+  const steps = startSteps();
+  const showStart = !db.gettingStartedDismissed && !steps.every(s=>s.ok);
+  const pick = todaysPick();
+  const todayLogged = db.wearLog.some(l=>l.date===todayIso);
+  const streak = logStreak();
+  const inSeasonStored = db.garments.filter(g=>g.status==="stored" && g.seasons.includes(currentSeason()));
+  return `
+  <div class="topline"><div><h1>Good ${new Date().getHours()<12?"morning":new Date().getHours()<18?"afternoon":"evening"}</h1>
+    <div class="sub">${state.weather? `${state.weather.temp}&deg;C, ${state.weather.label} &middot; high ${state.weather.high}&deg;${state.weather.rain?" &middot; rain likely":""} <span class="mini">(live)</span>`
+      : `14&deg;C, light drizzle (mock) &mdash; <button class="ghost" data-act="weather-enable" style="padding:2px 8px;font-size:12px">use my real weather</button>`}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" data-act="nav" data-v="dress">Dress me</button>
+    <button data-act="chat-open">Ask the stylist</button>
+    <button data-act="add-garment">Add item</button></div></div>
+  <div class="card" style="margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+      <h2 style="margin:0">Today</h2>
+      <span class="mini">${todayEvents.length? todayEvents.map(e=>esc(e.title)).join(", ") : new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</span></div>
+    ${todayLogged? `<div class="mini" style="margin-top:10px">Today's outfit is logged. ${streak>1?`You're on a ${streak}-day streak.`:""}</div>`
+      : pick? `<div class="opt-items" style="margin:12px 0 10px">${pick.items.map(g=>tile(g,g.cat)).join("")}</div>
+        <div class="actions"><button class="primary" data-act="today-wear">I'll wear this</button>
+        <button data-act="nav" data-v="dress">More options</button></div>`
+      : `<div class="mini" style="margin-top:10px">Add a few more items and I'll have a morning suggestion ready.</div>`}
+  </div>
+  ${inSeasonStored.length? `<div class="note" style="margin-bottom:18px">It's ${currentSeason()} &mdash; ${inSeasonStored.length} stored item${inSeasonStored.length===1?" is":"s are"} back in season (${inSeasonStored.slice(0,3).map(g=>esc(g.name)).join(", ")}${inSeasonStored.length>3?"&hellip;":""}). <button class="ghost" data-act="filter-stored" style="padding:2px 10px;font-size:12px">Review stored</button></div>`:""}
+  ${showStart? `<div class="card" style="margin-bottom:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Getting started</h2>
+      <button class="ghost" data-act="dismiss-start" style="padding:2px 10px">&times;</button></div>
+    ${steps.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);margin-top:9px">
+      <span style="width:20px;text-align:center;color:${s.ok?"var(--good)":"var(--muted)"}">${s.ok?"&#10003;":"&#9675;"}</span>
+      <span style="flex:1;font-size:14px;${s.ok?"color:var(--muted)":""}">${s.label}</span>
+      ${s.ok?"":`<button data-act="${s.act}" ${s.v?`data-v="${s.v}"`:""}>${s.btn}</button>`}</div>`).join("")}
+  </div>`:""}
+  <div class="grid g-stats">
+    <div class="card"><div class="stat-label">Items in wardrobe</div><div class="stat-num">${active.length}</div></div>
+    <div class="card"><div class="stat-label">Saved outfits</div><div class="stat-num">${db.outfits.length}</div></div>
+    <div class="card"><div class="stat-label">Wears logged</div><div class="stat-num">${wears}</div></div>
+    <div class="card"><div class="stat-label">Log streak</div><div class="stat-num">${streak}<span style="font-size:14px"> day${streak===1?"":"s"}</span></div></div>
+    <div class="card"><div class="stat-label">Color season</div><div class="stat-num" style="font-size:18px;padding-top:6px">${esc(db.profile.season)}</div></div>
+  </div>
+  <div class="section"><h2>Insights</h2>
+    <div class="grid g-stats">
+      <div class="card"><div class="stat-label">Closet utilization</div><div class="stat-num">${util}%</div>
+        <div class="mini">${wornOnce} of ${active.length} pieces worn</div><div class="bar"><i style="width:${util}%"></i></div></div>
+      <div class="card"><div class="stat-label">Wardrobe value</div><div class="stat-num">$${value.toLocaleString()}</div>
+        <div class="mini">${cpw.length?`best value: ${esc(cpw[0].g.name)} &middot; $${cpw[0].v.toFixed(2)}/wear`:"add prices to track cost-per-wear"}</div></div>
+      <div class="card"><div class="stat-label">Wardrobe gaps</div>
+        ${gaps.length? `<div class="pal" style="margin-top:8px">${gaps.map(x=>`<span class="chip">${x}<button data-act="wish-add" data-label="${esc(x)}" title="add to wishlist">+</button></span>`).join("")}</div>`
+          : `<div class="stat-num" style="font-size:16px;padding-top:8px">None &mdash; nicely balanced</div>`}</div>
+    </div>
+    ${db.wishlist.length? `<h3 style="margin:16px 0 8px">Wishlist</h3>
+      <div class="pal">${db.wishlist.map((w,i)=>`<span class="chip">${esc(w.label)}
+        <button data-act="wish-got" data-i="${i}" title="bought it — add photos">&#10003;</button>
+        <button data-act="wish-del" data-i="${i}">&times;</button></span>`).join("")}</div>`:""}
+    <h3 style="margin:18px 0 10px">Needs more wear</h3>
+    <div class="grid g-items">${neglected.map(itemCard).join("")}</div>
+  </div>
+  <div class="section"><h2>Upcoming</h2>
+    ${up.length? up.map(e=>`<div class="card event-card" style="margin-bottom:10px">
+      <div><h3>${esc(e.title)} ${e.end?'<span class="badge">trip</span>':""}</h3>
+      <div class="mini">${fmtDate(e.date)}${e.end?" &ndash; "+fmtDate(e.end):""} &middot; ${esc(e.type)}${e.dressCode?" &middot; dress code: "+esc(e.dressCode):""}</div></div>
+      <button data-act="${(e.end||e.notes)?"plan-trip":"plan-event"}" data-id="${e.id}">${(e.end||e.notes)?"AI plan":"Plan outfit"}</button></div>`).join("")
+      : `<div class="empty">No upcoming events. Add one under Events.</div>`}
+  </div>
+  <div class="section"><h2>Most worn</h2><div class="grid g-items">${most.map(itemCard).join("")}</div></div>`;
+}
+
+function viewWardrobe(){
+  const cats = ["all","top","bottom","dress","outerwear","footwear","accessory","laundry","stored"];
+  let list;
+  if(state.filter==="laundry"){ list = db.garments.filter(g=>g.status==="laundry"); }
+  else if(state.filter==="stored"){ list = db.garments.filter(g=>g.status==="stored"); }
+  else {
+    list = db.garments.filter(g=>g.status==="active");
+    if(state.filter!=="all") list = list.filter(g=>g.cat===state.filter);
+  }
+  if(state.search){
+    const q = state.search.toLowerCase();
+    list = list.filter(g => g.name.toLowerCase().includes(q)
+      || g.colors.some(c=>c.name.toLowerCase().includes(q))
+      || g.occasions.some(o=>o.includes(q)));
+  }
+  return `
+  <div class="topline"><div><h1>Wardrobe</h1><div class="sub">${list.length} item${list.length===1?"":"s"} shown</div></div>
+    <div style="display:flex;gap:8px"><button class="primary" data-act="add-garment">+ Add photos</button>
+    <button class="ghost" data-act="add-manual">Add manually</button></div></div>
+  <div class="filter-row">
+    ${cats.map(c=>`<button class="f ${state.filter===c?"on":""}" data-act="filter" data-id="${c}">${cap(c)}</button>`).join("")}
+    <input id="search" placeholder="Search&hellip;" value="${esc(state.search)}" style="max-width:200px;margin-left:auto">
+  </div>
+  <div class="grid g-items">
+    <button class="up-tile" data-act="add-garment"><span class="plus">+</span>
+      <span>Click to add photos</span><span class="mini">single items or full outfit photos &mdash; AI extracts each piece</span></button>
+    ${list.map(itemCard).join("")}</div>`;
+}
+
+function viewDress(){
+  const saved = db.outfits.slice().reverse();
+  const tripScopes = Object.keys(db.trips).filter(k=>db.trips[k].v).map(k=>{
+    const ev = db.events.find(e=>e.id===k); return ev ? {id:k, label:"Capsule: "+ev.title} : null;
+  }).filter(Boolean);
+  return `
+  <div class="topline"><div><h1>Dress me</h1>
+    <div class="sub">Pick the context &mdash; the stylist proposes complete outfits from your own wardrobe</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button data-act="chat-open">Ask the stylist</button>
+      <button data-act="mirror-check">Mirror check</button></div></div>
+  <div class="card">
+    ${db.presets.length? `<div class="pal" style="margin-bottom:12px">${db.presets.map((p,i)=>`<span class="chip" style="cursor:pointer" data-act="preset-apply" data-i="${i}">${esc(p.name)}<button data-act="preset-del" data-i="${i}">&times;</button></span>`).join("")}</div>`:""}
+    <div class="controls">
+      <div><label>Occasion</label><select id="occ">${["work","casual","date","formal","travel","sport"].map(o=>`<option ${state.occ===o?"selected":""}>${o}</option>`).join("")}</select></div>
+      <div><label>Temperature: <b id="tempOut">${state.temp}&deg;C</b>${state.weather?` <span class="mini">live</span>`:""}</label><input type="range" id="temp" min="-10" max="35" step="1" value="${state.temp}"></div>
+      <div><label>Scope</label><select id="dressScope">
+        <option value="all" ${state.scope==="all"?"selected":""}>Whole wardrobe</option>
+        <option value="favorites" ${state.scope==="favorites"?"selected":""}>Favorites only</option>
+        ${tripScopes.map(t=>`<option value="trip:${t.id}" ${state.scope==="trip:"+t.id?"selected":""}>${esc(t.label)}</option>`).join("")}
+      </select></div>
+      <div><label>Conditions</label><label class="chip" style="cursor:pointer;display:inline-flex;gap:6px;margin:0"><input type="checkbox" id="rain" ${state.rain?"checked":""} style="width:auto"> rain expected</label></div>
+      <div><button class="primary" data-act="generate" style="width:100%">${state.generating?"Styling&hellip;":"Generate outfits"}</button></div>
+      <div><button data-act="preset-save" style="width:100%">Save as preset</button></div>
+    </div>
+  </div>
+  ${state.aiError? `<div class="note" style="margin-top:10px;border-left:3px solid var(--bad)">AI call failed (${esc(state.aiError)}) &mdash; showing local-rules suggestions instead.</div>`:""}
+  <div class="section" id="results">
+    ${state.generating? `<div class="empty">The stylist is thinking&hellip;</div>`
+      : state.options.length? state.options.map(optCard).join("") : `<div class="empty">No suggestions yet &mdash; set the context above and hit Generate.</div>`}
+  </div>
+  <div class="note">${aiKey()? "Connected to Claude &mdash; suggestions are real AI styling over your catalog."
+    : "Local rules mode. Connect your Claude API key under Profile &rarr; Connect AI to make styling, tagging, trip plans and chat real."}</div>
+  ${saved.length? `<div class="section"><h2>Saved looks</h2>${saved.map(savedCard).join("")}</div>`:""}`;
+}
+function optCard(o, i){
+  const items = o.items.map(id=>db.garments.find(g=>g.id===id)).filter(Boolean);
+  return `<div class="opt-card" id="opt${i}">
+    <h3>${esc(o.title)}</h3>
+    <div class="opt-items">${items.map(g=>tile(g, o.roles[g.id]||g.cat)).join("")}</div>
+    <div class="reason">${esc(o.reason)}</div>
+    <div class="pal">${o.colors.map(c=>colorChip(c)).join("")}</div>
+    <div class="actions">
+      <button class="btn-good" data-act="opt-save" data-i="${i}">&#10003; Save this look</button>
+      <button data-act="opt-wear" data-i="${i}">Wore it today</button>
+      <button data-act="share-outfit" data-ids="${o.items.join(",")}" data-title="${esc(o.title)}">Share</button>
+      <button class="btn-bad" data-act="opt-reject" data-i="${i}">&#10007; Not for me</button>
+    </div></div>`;
+}
+function savedCard(o){
+  const items = o.items.map(id=>db.garments.find(g=>g.id===id)).filter(Boolean);
+  return `<div class="opt-card">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <h3>${esc(o.title)}</h3><span class="mini">${esc(o.occ)} &middot; ${o.temp}&deg;C &middot; saved ${fmtDate(o.date)}</span></div>
+    <div class="opt-items">${items.map(g=>tile(g, g.cat)).join("")}</div>
+    <div class="actions">
+      <button data-act="wore-outfit" data-id="${o.id}">I wore this</button>
+      <button data-act="share-outfit" data-ids="${o.items.join(",")}" data-title="${esc(o.title)}">Share</button>
+      <button class="ghost" data-act="del-outfit" data-id="${o.id}">Remove</button>
+      ${o.wornCount?`<span class="chip">worn ${o.wornCount}&times;</span>`:""}
+    </div></div>`;
+}
+
+function viewEvents(){
+  const evs = db.events.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  return `
+  <div class="topline"><div><h1>Events &amp; trips</h1><div class="sub">Anything multi-day becomes a trip and gets a packing-list plan in production</div></div></div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="two">
+      <div><label>Title</label><input id="evTitle" placeholder="Team offsite"></div>
+      <div><label>Type</label><select id="evType">${["work","formal","date","casual","travel","sport"].map(t=>`<option>${t}</option>`).join("")}</select></div>
+      <div><label>Date</label><input type="date" id="evDate"></div>
+      <div><label>End date (trips)</label><input type="date" id="evEnd"></div>
+      <div><label>Location</label><input id="evLoc" placeholder="Lisbon"></div>
+      <div><label>Dress code (optional)</label><input id="evCode" placeholder="cocktail&hellip;"></div>
+    </div>
+    <label>Describe the plan &mdash; the AI reads every moment</label>
+    <textarea id="evDesc" placeholder="Day 1: arrive, client dinner. Day 2: conference all day, gala at night (black tie). Day 3: beach morning, museum, night out. Day 4: hike, flight home."></textarea>
+    <div style="margin-top:14px"><button class="primary" data-act="add-event">Add event</button></div>
+  </div>
+  ${evs.length? evs.map(e=>`<div class="card event-card" style="margin-bottom:10px">
+    <div style="flex:1;min-width:200px"><h3>${esc(e.title)} ${e.end?'<span class="badge">trip</span>':""}</h3>
+    <div class="mini">${fmtDate(e.date)}${e.end?" &ndash; "+fmtDate(e.end):""} &middot; ${esc(e.type)}${e.location?" &middot; "+esc(e.location):""}${e.dressCode?" &middot; "+esc(e.dressCode):""}</div>
+    ${e.notes?`<div class="mini" style="margin-top:5px;line-height:1.5;opacity:.85">${esc(e.notes.length>120? e.notes.slice(0,120)+"&hellip;" : e.notes)}</div>`:""}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${(e.end||e.notes)? `<button data-act="plan-trip" data-id="${e.id}">${db.trips[e.id]?"Rebuild AI plan":"AI plan"}</button>${db.trips[e.id]?`<button data-act="trip-view" data-id="${e.id}">View plan</button>`:""}`
+        : `<button data-act="plan-event" data-id="${e.id}">Plan outfit</button>`}
+      <button class="ghost" data-act="del-event" data-id="${e.id}">&times;</button></div>
+    </div>`).join("") : `<div class="empty">No events yet.</div>`}`;
+}
+
+function viewProfile(){
+  const p = db.profile;
+  return `
+  <div class="topline"><div><h1>Profile</h1><div class="sub">Everything the stylist knows about you &mdash; all of it editable</div></div></div>
+  <div class="card" style="margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+    <div><h2 style="margin-bottom:4px">Find your colors &amp; fit</h2>
+    <div class="mini">A face photo, an optional body photo and seven quick questions &mdash; the stylist derives your undertone, color season, palette and body type.</div></div>
+    <button class="primary" data-act="wiz-start">Start analysis</button>
+  </div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+    <div class="card"><h2>Coloring</h2>
+      <label>Undertone</label><select data-bind="undertone">${["warm","cool","neutral","olive"].map(v=>`<option ${p.undertone===v?"selected":""}>${v}</option>`).join("")}</select>
+      <label>Depth</label><select data-bind="depth">${["fair","light","medium","medium-deep","deep"].map(v=>`<option ${p.depth===v?"selected":""}>${v}</option>`).join("")}</select>
+      <label>Color season</label><input data-bind="season" value="${esc(p.season)}">
+      <label>Jewelry metal</label><select data-bind="jewelry">${["gold","silver","both"].map(v=>`<option ${p.jewelry===v?"selected":""}>${v}</option>`).join("")}</select>
+      <div class="note">Run the photo &amp; questions analysis above to fill these automatically &mdash; or set them by hand. Your edits always win.</div>
+    </div>
+    <div class="card"><h2>Body &amp; style</h2>
+      <label>Body type</label><select data-bind="bodyType">${["rectangle","athletic","hourglass","pear","inverted triangle","round"].map(v=>`<option ${p.bodyType===v?"selected":""}>${v}</option>`).join("")}</select>
+      <label>Style preferences</label>
+      <div class="pal">${p.stylePrefs.map((s,i)=>`<span class="chip">${esc(s)}<button data-act="del-pref" data-i="${i}">&times;</button></span>`).join("")}</div>
+      <div style="display:flex;gap:8px"><input id="newPref" placeholder="e.g. streetwear"><button data-act="add-pref">Add</button></div>
+    </div>
+  </div>
+  <div class="card section"><h2>Your palette</h2>
+    <div class="mini" style="margin-bottom:4px">Best colors (worn near the face)</div>
+    <div class="pal">${p.bestColors.map((c,i)=>colorChip(c,"del-best",i)).join("")}</div>
+    <div style="display:flex;gap:8px;max-width:420px"><input id="bcName" placeholder="color name"><input type="color" id="bcHex" value="#B7410E" style="width:52px;padding:3px"><button data-act="add-best">Add</button></div>
+    <div class="mini" style="margin:14px 0 4px">Colors to avoid</div>
+    <div class="pal">${p.avoidColors.map((c,i)=>colorChip(c,"del-avoid",i)).join("")}</div>
+  </div>
+  <div class="card section"><h2>What the stylist has learned</h2>
+    <textarea data-bind="learned">${esc(p.learned)}</textarea>
+    <div class="note">In production this summary is rewritten by Claude every ~10 feedback events from your thumbs, swaps and wear history &mdash; and it's injected into every outfit request. Edit it freely; your words win.</div>
+  </div>
+  <div class="card section"><h2>Connect AI &amp; live weather</h2>
+    <div class="mini" style="line-height:1.6;margin-bottom:10px">Bring your own Anthropic API key and every mocked seam becomes real: vision tagging, outfit-piece extraction, skin-tone analysis, true AI styling, itinerary planning, stylist chat and mirror checks. The key stays in this browser and calls Anthropic directly &mdash; fine for personal use; a public product would proxy through a server.</div>
+    <div class="two">
+      <div><label>Anthropic API key</label><input type="password" data-set="apiKey" value="${esc(db.settings.apiKey||"")}" placeholder="sk-ant-&hellip;"></div>
+      <div><label>Model</label><select data-set="model">${["claude-opus-4-8","claude-sonnet-4-6","claude-haiku-4-5"].map(m=>`<option ${db.settings.model===m?"selected":""}>${m}</option>`).join("")}</select></div>
+    </div>
+    <div class="pal" style="margin-top:12px">
+      <span class="chip" style="${aiKey()?"color:var(--good)":""}">${aiKey()? "AI: connected" : "AI: local rules mode"}</span>
+      <span class="chip" style="${db.settings.lat!=null?"color:var(--good)":""}">${db.settings.lat!=null? "weather: live" : "weather: mock"}</span>
+      ${db.settings.lat==null?`<button data-act="weather-enable">Enable live weather</button>`:""}
+    </div>
+  </div>
+  <div class="card section"><h2>Your data &amp; privacy</h2>
+    <div class="mini" style="line-height:1.6;margin-bottom:12px">Everything lives in this browser's storage &mdash; nothing is sent anywhere unless you connect an AI key or live weather. Analysis photos are processed in memory and never persisted. In production: photos go once to the analysis API with explicit consent, aren't stored, and your account data is exportable and deletable at any time (GDPR/CCPA).</div>
+    <div class="actions">
+      <button data-act="export-data">Export my data (JSON)</button>
+      <button data-act="import-data">Import backup</button>
+      <button class="btn-bad ghost" data-act="wipe-data">Delete everything</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- outfit generator (mock of /api/outfits/generate) ---------- */
+const targetWarmth = t => t>=25?1 : t>=18?2 : t>=10?3 : t>=3?4 : 5;
+function accentsOf(items){
+  const set = new Set();
+  items.forEach(g=>g.colors.forEach(c=>{ if(!NEUTRALS.includes(c.name.toLowerCase())) set.add(c.name.toLowerCase()); }));
+  return [...set];
+}
+function scoreCombo(items, target, frange, rain){
+  const fmid = (frange[0]+frange[1])/2;
+  let sc = 0;
+  for(const g of items){
+    sc += (g.score||0) + (g.fav?1.5:0) + Math.min(g.worn||0,30)/30;
+    if(g.cat!=="accessory") sc -= Math.abs(g.warmth-target)*0.8;
+    sc -= Math.abs(g.formality-fmid)*0.7;
+  }
+  const acc = accentsOf(items);
+  if(acc.length===0) sc += 1.5;
+  else if(acc.length===1) sc += 2.5;
+  else if(acc.length===2) sc += 0.5;
+  else sc -= 2;
+  for(const a of acc){
+    if(db.profile.bestColors.some(c=>c.name.toLowerCase()===a)) sc += 1.4;
+    if(db.profile.avoidColors.some(c=>c.name.toLowerCase()===a)) sc -= 2.5;
+  }
+  if(rain && items.some(g=>g.rain)) sc += 1.5;
+  for(let i=0;i<items.length;i++) for(let j=i+1;j<items.length;j++)
+    sc += (db.pairs[pairKey(items[i].id, items[j].id)]||0)*0.4;
+  return sc;
+}
+function comboHash(items){ return items.map(g=>g.id).sort().join("|"); }
+function buildReason(items, occ, temp, target, rain){
+  const anchor = items.slice().sort((a,b)=>((b.fav?20:0)+(b.worn||0))-((a.fav?20:0)+(a.worn||0)))[0];
+  const acc = accentsOf(items);
+  const bits = [];
+  bits.push(`Built around your ${anchor.name.toLowerCase()}${anchor.fav?" — a favorite":""}${anchor.worn>=20?` you've worn ${anchor.worn} times`:""}.`);
+  if(acc.length===0) bits.push("Fully neutral palette, so the silhouette does the talking.");
+  else if(acc.length===1){
+    const inPal = db.profile.bestColors.some(c=>c.name.toLowerCase()===acc[0]);
+    bits.push(`One accent — ${acc[0]} — ${inPal?`squarely in your ${db.profile.season.toLowerCase()} palette`:"kept away from the face"}; the rest stays neutral.`);
+  } else bits.push(`Two accents (${acc.join(", ")}) balanced with neutrals.`);
+  bits.push(`Warmth sits near ${target}/5 for ${temp}°C${rain?", and the rain layer keeps you dry":""}; formality reads right for ${occ}.`);
+  return bits.join(" ");
+}
+function buildCombos(occ, temp, rain, boostSet, scope){
+  const target = targetWarmth(temp);
+  const fr = OCC_FORMALITY[occ] || [1,5];
+  let scopeIds = null;
+  if(scope==="favorites") scopeIds = new Set(db.garments.filter(g=>g.fav).map(g=>g.id));
+  else if(scope && scope.startsWith("trip:")){
+    const t = db.trips[scope.slice(5)];
+    if(t) scopeIds = new Set(t.packing || t.items || []);
+  }
+  const inScope = g => !scopeIds || scopeIds.has(g.id);
+  const pool = db.garments.filter(g => g.status==="active" && inScope(g) && g.occasions.includes(occ)
+    && g.formality >= fr[0]-1 && g.formality <= fr[1]);
+  const within = g => Math.abs(g.warmth-target)<=2;
+  const tops = pool.filter(g=>g.cat==="top" && within(g));
+  const bottoms = pool.filter(g=>g.cat==="bottom" && within(g));
+  const dresses = pool.filter(g=>g.cat==="dress" && within(g));
+  const shoes = pool.filter(g=>g.cat==="footwear");
+  const accs = pool.filter(g=>g.cat==="accessory" && (g.warmth<=2 || target>=4));
+  const outers = db.garments.filter(g => g.status==="active" && inScope(g) && g.cat==="outerwear"
+    && g.occasions.includes(occ) && g.formality >= fr[0]-1 && target>=3 && g.warmth >= target-1);
+  const score = items => {
+    let sc = scoreCombo(items, target, fr, rain);
+    if(boostSet) for(const it of items) if(boostSet.has(it.id)) sc += 1.2;
+    return sc;
+  };
+  const combos = [];
+  const push = base => {
+    let items = base, best = score(base);
+    if(outers.length){
+      for(const o of outers){
+        const sc2 = score(base.concat(o));
+        if(sc2 > best){ best = sc2; items = base.concat(o); }
+      }
+      if(target>=4 && items.length===base.length){
+        let bo=null, bs=-1e9;
+        for(const o of outers){ const sc2 = score(base.concat(o)); if(sc2>bs){bs=sc2;bo=o;} }
+        if(bo){ items = base.concat(bo); best = bs; }
+      }
+    }
+    if(accs.length){
+      let ba=null, bs2=-1e9;
+      for(const a of accs){ const s2 = score(items.concat(a)); if(s2>bs2){bs2=s2;ba=a;} }
+      if(ba && bs2 > best - 0.3){ items = items.concat(ba); best = bs2; }
+    }
+    const hash = comboHash(items);
+    if(db.rejected.includes(hash)) return;
+    combos.push({items, score:best, hash});
+  };
+  for(const t of tops) for(const b of bottoms) for(const s of shoes) push([t,b,s]);
+  for(const d of dresses) for(const s of shoes) push([d,s]);
+  combos.sort((a,b)=>b.score-a.score);
+  return {combos, target, fr};
+}
+async function generate(){
+  state.aiError = null;
+  if(aiKey()){
+    try{ await generateAI(); return; }
+    catch(e){ state.aiError = e.message; }
+  }
+  generateLocal();
+}
+async function generateAI(){
+  const occ = state.occ, temp = state.temp, rain = state.rain;
+  const prompt = `WARDROBE CATALOG (JSON):\n${catalogJson()}\n\nUSER PROFILE: ${profileBrief()}\n\nCONTEXT: occasion=${occ}; temperature=${temp}C; rain=${rain}; scope=${state.scope}.\nNever repeat these rejected id-sets exactly: ${db.rejected.join(" ; ")||"none"}.\n\nPropose 3 distinct, complete outfits using ONLY ids from the catalog (include footwear; layer outerwear/accessories when sensible). Reply ONLY JSON: {"outfits":[{"title":"short title","item_ids":["..."],"reason":"2-3 sentences referencing the weather, occasion and the user's coloring/style"}]}`;
+  const text = await claude([{role:"user", content:prompt}], {maxTokens:1400, system:"You are a personal stylist. Reply only with JSON."});
+  const data = extractJson(text);
+  const opts = [];
+  (data.outfits||[]).slice(0,3).forEach((o,i)=>{
+    const items = (o.item_ids||[]).map(id=>db.garments.find(g=>g.id===id && g.status==="active")).filter(Boolean);
+    if(items.length < 2) return;
+    const roles = {}; items.forEach(g=>roles[g.id] = g.cat==="outerwear"?"layer":g.cat);
+    const colors = []; const seen = new Set();
+    items.forEach(g=>g.colors.forEach(c=>{ if(!seen.has(c.name)){seen.add(c.name); colors.push(c);} }));
+    opts.push({ items:items.map(g=>g.id), roles, hash:comboHash(items),
+      title:(o.title||`Option ${i+1}`), reason:o.reason||"", colors, occ, temp });
+  });
+  if(!opts.length) throw new Error("no valid outfits in AI reply");
+  state.options = opts;
+}
+function generateLocal(){
+  const occ = state.occ, temp = state.temp, rain = state.rain;
+  let {combos} = buildCombos(occ, temp, rain, null, state.scope);
+  if(!combos.length && state.scope!=="all") ({combos} = buildCombos(occ, temp, rain, null, "all"));
+  const picked = [], usedAnchors = new Set(), usedHash = new Set();
+  for(const c of combos){
+    const anchor = c.items.find(g=>g.cat==="top"||g.cat==="dress");
+    const aid = anchor ? anchor.id : c.items[0].id;
+    if(usedHash.has(c.hash) || usedAnchors.has(aid)) continue;
+    usedAnchors.add(aid); usedHash.add(c.hash); picked.push(c);
+    if(picked.length===3) break;
+  }
+  state.options = picked.map((c,i)=>{
+    const acc = accentsOf(c.items);
+    const roles = {}; c.items.forEach(g=>roles[g.id] = g.cat==="outerwear"?"layer":g.cat);
+    const colors = []; const seen = new Set();
+    c.items.forEach(g=>g.colors.forEach(col=>{ if(!seen.has(col.name)){ seen.add(col.name); colors.push(col);} }));
+    return { items:c.items.map(g=>g.id), roles, hash:c.hash,
+      title: `${acc.length? cap(acc[0]) : "Neutral"} ${occ} — option ${i+1}`,
+      reason: buildReason(c.items, occ, temp, targetWarmth(temp), rain),
+      colors, occ, temp };
+  });
+}
+
+/* ---------- modals ---------- */
+const overlay = document.getElementById("overlay");
+const modal = document.getElementById("modal");
+function openModal(html){ modal.innerHTML = html; overlay.classList.add("open"); }
+function closeModal(){ overlay.classList.remove("open"); state.pendingImg = null; state.uploadQueue = []; state.pendingFiles = []; }
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closeModal(); });
+
+function addGarmentModal(){
+  state.pendingImg = null;
+  openModal(`<h2>Add item <button class="ghost" data-act="close">&times;</button></h2>
+  <label>Photo (optional)</label><input type="file" id="gImg" accept="image/*">
+  <div id="imgPrev"></div>
+  <button data-act="mock-ai" style="margin-top:10px;width:100%">&#10024; Mock AI autofill <span class="mini">(Claude vision in production)</span></button>
+  <div class="two">
+    <div><label>Name</label><input id="gName" placeholder="Navy merino crewneck"></div>
+    <div><label>Category</label><select id="gCat">${["top","bottom","dress","outerwear","footwear","accessory"].map(c=>`<option>${c}</option>`).join("")}</select></div>
+    <div><label>Pattern</label><select id="gPattern">${["solid","stripe","floral","texture"].map(p=>`<option>${p}</option>`).join("")}</select></div>
+    <div><label>Price (optional)</label><input type="number" id="gPrice" min="0" placeholder="49"></div>
+    <div><label>Color name</label><input id="gColName" placeholder="navy"></div>
+    <div><label>Color</label><input type="color" id="gColHex" value="#1F2A44" style="height:38px;padding:3px"></div>
+    <div><label>Formality (1&ndash;5)</label><input type="range" id="gForm" min="1" max="5" value="3"></div>
+    <div><label>Warmth (1&ndash;5)</label><input type="range" id="gWarm" min="1" max="5" value="3"></div>
+  </div>
+  <label>Seasons</label><div class="checks">${SEASONS.map(s=>`<label><input type="checkbox" name="gSeason" value="${s}" checked>${s}</label>`).join("")}</div>
+  <label>Occasions</label><div class="checks">${OCCS.map(o=>`<label><input type="checkbox" name="gOcc" value="${o}" ${["casual"].includes(o)?"checked":""}>${o}</label>`).join("")}</div>
+  <div style="margin-top:16px;display:flex;gap:8px"><button class="primary" data-act="save-garment">Save item</button><button data-act="close">Cancel</button></div>`);
+  document.getElementById("gImg").addEventListener("change", ev=>{
+    const f = ev.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { state.pendingImg = r.result;
+      document.getElementById("imgPrev").innerHTML = `<img src="${r.result}" style="margin-top:8px;max-height:130px;border-radius:10px">`; };
+    r.readAsDataURL(f);
+  });
+}
+function mockAI(){
+  const guesses = [
+    {name:"Stone overshirt",cat:"outerwear",col:["stone","#B8AFA0"],form:2,warm:3,occ:["casual","travel"]},
+    {name:"Cream cable knit",cat:"top",col:["cream",'#EFE4CC'],form:2,warm:4,occ:["casual","date"]},
+    {name:"Mustard polo",cat:"top",col:["mustard","#C99A2E"],form:2,warm:1,occ:["casual","date","travel"]},
+    {name:"Black slim trousers",cat:"bottom",col:["black","#1E1C1A"],form:4,warm:2,occ:["work","formal","date"]},
+  ];
+  const g = guesses[Math.floor(Math.random()*guesses.length)];
+  document.getElementById("gName").value = g.name;
+  document.getElementById("gCat").value = g.cat;
+  document.getElementById("gColName").value = g.col[0];
+  document.getElementById("gColHex").value = g.col[1];
+  document.getElementById("gForm").value = g.form;
+  document.getElementById("gWarm").value = g.warm;
+  document.querySelectorAll('input[name="gOcc"]').forEach(cb=>cb.checked = g.occ.includes(cb.value));
+}
+function saveGarment(){
+  const name = document.getElementById("gName").value.trim();
+  if(!name){ document.getElementById("gName").focus(); return; }
+  const gPriceVal = document.getElementById("gPrice").value;
+  const gCatVal = document.getElementById("gCat").value;
+  const gColVal = document.getElementById("gColName").value.trim()||"color";
+  if(dupeWarn(gCatVal, gColVal)) return;
+  db.garments.push({
+    id:"g"+uid(), name, cat:gCatVal,
+    colors:[{name:document.getElementById("gColName").value.trim()||"color", hex:document.getElementById("gColHex").value}],
+    pattern:document.getElementById("gPattern").value,
+    formality:+document.getElementById("gForm").value, warmth:+document.getElementById("gWarm").value,
+    seasons:[...document.querySelectorAll('input[name="gSeason"]:checked')].map(c=>c.value),
+    occasions:[...document.querySelectorAll('input[name="gOcc"]:checked')].map(c=>c.value),
+    fav:false, worn:0, score:0, status:"active", img:state.pendingImg, rain:false,
+    price: gPriceVal? +gPriceVal : null, lastWorn:null
+  });
+  save(); closeModal(); state.view="wardrobe"; render();
+}
+function garmentDetail(id){
+  const g = db.garments.find(x=>x.id===id); if(!g) return;
+  openModal(`<h2>${esc(g.name)} <button class="ghost" data-act="close">&times;</button></h2>
+  <div style="border-radius:10px;overflow:hidden;margin:10px 0">${swatchDiv(g, "swatch")}</div>
+  <div class="pal">${g.colors.map(c=>colorChip(c)).join("")}
+    <span class="chip">${esc(g.cat)}</span><span class="chip">formality ${g.formality}/5</span>
+    <span class="chip">warmth ${g.warmth}/5</span><span class="chip">${g.worn||0}&times; worn</span>
+    ${g.price?`<span class="chip">$${g.price}</span>`:""}
+    ${g.price&&g.worn?`<span class="chip">$${(g.price/g.worn).toFixed(2)}/wear</span>`:""}
+    ${g.status==="laundry"?'<span class="chip" style="color:var(--accent)">in laundry</span>':""}</div>
+  <div class="mini" style="margin:6px 0 10px">Seasons: ${g.seasons.join(", ")} &middot; Occasions: ${g.occasions.join(", ")}</div>
+  <div class="two">
+    <div><label>Condition</label><select data-gfield="condition" data-gid="${g.id}">${["good","worn","needs repair"].map(c=>`<option ${g.condition===c?"selected":""}>${c}</option>`).join("")}</select></div>
+    <div><label>Care notes</label><input data-gfield="care" data-gid="${g.id}" value="${esc(g.care||"")}" placeholder="cold wash, no dryer"></div>
+  </div>
+  <div class="actions" style="margin-top:14px">
+    <button data-act="fav-toggle" data-id="${g.id}">${g.fav?"&#9733; Unfavorite":"&#9734; Favorite"}</button>
+    <button data-act="worn-plus" data-id="${g.id}">+1 wear</button>
+    <button data-act="laundry-toggle" data-id="${g.id}">${g.status==="laundry"?"Back in rotation":"To laundry"}</button>
+    <button data-act="store-toggle" data-id="${g.id}">${g.status==="stored"?"Bring back":"Store away"}</button>
+    <button data-act="sell-item" data-id="${g.id}">Sell this</button>
+    <button data-act="retire" data-id="${g.id}">Retire</button>
+    <button class="btn-bad ghost" data-act="del-garment" data-id="${g.id}">Delete</button>
+  </div>`);
+}
+
+/* ---------- click-to-upload flow (mock of /api/garments/analyze) ---------- */
+document.getElementById("filePick").addEventListener("change", ev=>{
+  const files = [...ev.target.files]; ev.target.value = "";
+  if(!files.length) return;
+  Promise.all(files.map(f=>new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.readAsDataURL(f); })))
+    .then(urls=>{ state.pendingFiles = urls; uploadModeModal(urls.length); });
+});
+function uploadModeModal(n){
+  openModal(`<h2>How should the AI read ${n>1?"these "+n+" photos":"this photo"}? <button class="ghost" data-act="close">&times;</button></h2>
+  <button class="photo-btn" data-act="mode-single" style="margin-top:12px;flex-direction:column;gap:4px">
+    <b>One garment per photo</b>
+    <span class="mini">A flat-lay or product shot of a single piece</span></button>
+  <button class="photo-btn" data-act="mode-outfit" style="margin-top:12px;flex-direction:column;gap:4px">
+    <b>Normal outfit photo &mdash; extract the pieces</b>
+    <span class="mini">A photo of an outfit being worn: the AI pulls out the shirt, the pants and the shoes as separate wardrobe items</span></button>
+  <div class="note">In production <b>/api/garments/analyze</b> (Claude vision) detects every garment in the frame and returns a bounding box per piece; the server crops each one into its own item. The prototype approximates this with clothing zones.</div>`);
+}
+function cropZone(img, sx, sy, sw, sh){
+  const c = document.createElement("canvas");
+  const scale = Math.min(1, 480/sw);
+  c.width = Math.max(1, Math.round(sw*scale)); c.height = Math.max(1, Math.round(sh*scale));
+  c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.85);
+}
+function extractPieces(dataUrl){
+  return new Promise(res=>{
+    const img = new Image();
+    img.onload = ()=>{
+      try{
+        const W = img.naturalWidth, H = img.naturalHeight;
+        const zones = [
+          {cat:"top",      sx:0.18, sy:0.10, sw:0.64, sh:0.38},
+          {cat:"bottom",   sx:0.22, sy:0.45, sw:0.56, sh:0.36},
+          {cat:"footwear", sx:0.20, sy:0.80, sw:0.60, sh:0.20},
+        ];
+        res(zones.map(z=>({
+          img: cropZone(img, Math.round(z.sx*W), Math.round(z.sy*H), Math.round(z.sw*W), Math.round(z.sh*H)),
+          cat: z.cat, hint: "extracted"
+        })));
+      }catch(e){ res([{img:dataUrl, cat:null, hint:null}]); }
+    };
+    img.onerror = ()=>res([{img:dataUrl, cat:null, hint:null}]);
+    img.src = dataUrl;
+  });
+}
+async function startQueue(mode){
+  const urls = state.pendingFiles; state.pendingFiles = [];
+  let items = null;
+  if(mode==="outfit"){
+    if(aiKey()){
+      openModal(`<h2>Detecting garments&hellip;</h2><div class="empty">Claude vision is locating each piece in your photo.</div>`);
+      try{
+        const nested = await Promise.all(urls.map(extractWithAI));
+        items = nested.flat();
+      }catch(e){ items = null; }
+    }
+    if(!items){ const nested = await Promise.all(urls.map(extractPieces)); items = nested.flat(); }
+  } else {
+    items = urls.map(u=>({img:u, cat:null, hint:null}));
+  }
+  state.uploadQueue = items; state.uploadTotal = items.length;
+  nextReview();
+}
+function cropRel(dataUrl, b){
+  return new Promise(res=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const W = img.naturalWidth, H = img.naturalHeight;
+      const sx = Math.max(0, b.x*W), sy = Math.max(0, b.y*H);
+      const sw = Math.max(10, Math.min(W-sx, b.w*W)), sh = Math.max(10, Math.min(H-sy, b.h*H));
+      res(cropZone(img, sx, sy, sw, sh));
+    };
+    img.onerror = ()=>res(dataUrl);
+    img.src = dataUrl;
+  });
+}
+async function extractWithAI(dataUrl){
+  const prompt = `Detect every distinct clothing item visible in this photo (top/shirt, bottom/pants, dress, outerwear, footwear, accessory). Reply ONLY JSON: {"garments":[{"category":"top|bottom|dress|outerwear|footwear|accessory","bbox":{"x":0.0,"y":0.0,"w":0.0,"h":0.0}}]} where bbox is normalized 0-1 coordinates of that garment's region.`;
+  const text = await claude([{role:"user", content:[imgBlock(dataUrl), {type:"text", text:prompt}]}], {maxTokens:700});
+  const d = extractJson(text);
+  const list = (d.garments||[]).filter(g=>g.bbox && g.bbox.w>0 && g.bbox.h>0).slice(0,6);
+  if(!list.length) throw new Error("no garments detected");
+  const crops = await Promise.all(list.map(g=>cropRel(dataUrl, g.bbox)));
+  return crops.map((img,i)=>({img, cat:list[i].category||null, hint:"extracted"}));
+}
+async function tagWithAI(item){
+  const prompt = `Analyze this clothing item photo for a wardrobe catalog. Reply ONLY JSON: {"name":"short name like 'Navy merino crewneck'","category":"top|bottom|dress|outerwear|footwear|accessory","color_name":"one lowercase word","color_hex":"#RRGGBB sampled from the garment","pattern":"solid|stripe|floral|texture","formality":1,"warmth":1,"seasons":["spring"],"occasions":["casual"]} (formality & warmth 1-5; seasons from spring/summer/fall/winter; occasions from work/casual/date/formal/sport/travel/lounge).`;
+  const text = await claude([{role:"user", content:[imgBlock(item.img), {type:"text", text:prompt}]}], {maxTokens:500});
+  const d = extractJson(text);
+  return {
+    name: d.name||"New item", cat: item.cat||d.category||"top",
+    colorName: d.color_name||"color",
+    colorHex: /^#[0-9a-fA-F]{6}$/.test(d.color_hex||"") ? d.color_hex : "#888888",
+    pattern: ["solid","stripe","floral","texture"].includes(d.pattern)? d.pattern : "solid",
+    formality: Math.min(5, Math.max(1, +d.formality||2)),
+    warmth: Math.min(5, Math.max(1, +d.warmth||2)),
+    seasons: (d.seasons||[]).filter(s=>SEASONS.includes(s)),
+    occasions: (d.occasions||[]).filter(o=>OCCS.includes(o)),
+    source: "ai"
+  };
+}
+async function nextReview(){
+  if(!state.uploadQueue.length){ closeModal(); state.view="wardrobe"; render(); return; }
+  const item = state.uploadQueue.shift();
+  const idx = state.uploadTotal - state.uploadQueue.length;
+  let tags = null;
+  if(aiKey()){
+    openModal(`<h2>Analyzing ${state.uploadTotal>1? "photo "+idx+" of "+state.uploadTotal : "photo"}&hellip;</h2><div class="empty">Claude vision is reading the garment.</div>`);
+    try{ tags = await tagWithAI(item); }catch(e){ tags = null; }
+  }
+  if(!tags){
+    const hex = await dominantColor(item.img);
+    const cname = nearestColorName(hex);
+    const cat = item.cat || "top";
+    tags = { name:`${cap(cname)} ${CAT_NOUN[cat]||cat}`, cat, colorName:cname, colorHex:hex,
+      pattern:"solid", formality:2, warmth:2, seasons:SEASONS.slice(), occasions:["casual"], source:"local" };
+  }
+  reviewModal(item, tags, idx, state.uploadTotal);
+}
+const CAT_NOUN = {top:"top", bottom:"pants", dress:"dress", outerwear:"jacket", footwear:"shoes", accessory:"accessory"};
+function reviewModal(item, tags, idx, total){
+  state.currentImg = item.img;
+  const cat = tags.cat || "top";
+  const seasonsOn = tags.seasons && tags.seasons.length ? tags.seasons : SEASONS;
+  const occsOn = tags.occasions && tags.occasions.length ? tags.occasions : ["casual"];
+  openModal(`<h2>Review item ${total>1?`<span class="mini">${idx} of ${total}</span>`:""} <button class="ghost" data-act="close">&times;</button></h2>
+  <img class="rev-img" src="${item.img}">
+  <div class="pal"><span class="chip"><span class="dot" style="background:${tags.colorHex}"></span>detected: ${esc(tags.colorName)}</span>
+    ${item.hint?`<span class="chip">extracted: ${esc(cat)}</span>`:""}
+    <span class="chip" style="${tags.source==="ai"?"color:var(--good)":""}">${tags.source==="ai"?"tagged by Claude vision":"on-device estimate"} &mdash; edit anything</span></div>
+  <div class="two">
+    <div><label>Name</label><input id="rName" value="${esc(tags.name)}"></div>
+    <div><label>Category</label><select id="rCat">${["top","bottom","dress","outerwear","footwear","accessory"].map(c=>`<option ${c===cat?"selected":""}>${c}</option>`).join("")}</select></div>
+    <div><label>Color name</label><input id="rColName" value="${esc(tags.colorName)}"></div>
+    <div><label>Color</label><input type="color" id="rColHex" value="${tags.colorHex}" style="height:38px;padding:3px"></div>
+    <div><label>Formality (1&ndash;5)</label><input type="range" id="rForm" min="1" max="5" value="${tags.formality}"></div>
+    <div><label>Warmth (1&ndash;5)</label><input type="range" id="rWarm" min="1" max="5" value="${tags.warmth}"></div>
+    <div><label>Pattern</label><select id="rPattern">${["solid","stripe","floral","texture"].map(p=>`<option ${p===tags.pattern?"selected":""}>${p}</option>`).join("")}</select></div>
+    <div><label>Price (optional)</label><input type="number" id="rPrice" min="0" placeholder="49"></div>
+  </div>
+  <label>Seasons</label><div class="checks">${SEASONS.map(s=>`<label><input type="checkbox" name="rSeason" value="${s}" ${seasonsOn.includes(s)?"checked":""}>${s}</label>`).join("")}</div>
+  <label>Occasions</label><div class="checks">${OCCS.map(o=>`<label><input type="checkbox" name="rOcc" value="${o}" ${occsOn.includes(o)?"checked":""}>${o}</label>`).join("")}</div>
+  ${tags.source==="ai"?"":`<div class="note">On-device estimate (dominant color only). Connect your Claude key under Profile and vision fills every field.</div>`}
+  <div style="margin-top:16px;display:flex;gap:8px">
+    <button class="primary" data-act="review-save">Save item</button>
+    ${total>1?'<button data-act="review-skip">Skip photo</button>':""}
+    <button class="ghost" data-act="close">Cancel</button></div>`);
+}
+function dupeWarn(cat, colName){
+  const n = db.garments.filter(g=>g.status!=="donated" && g.cat===cat
+    && g.colors.some(c=>c.name.toLowerCase()===colName.toLowerCase())).length;
+  return n>=3 ? !confirm(`You already own ${n} ${colName} ${cat} item${n===1?"":"s"} — add this one anyway?`) : false;
+}
+function saveReview(){
+  const name = document.getElementById("rName").value.trim() || "New item";
+  const priceVal = document.getElementById("rPrice").value;
+  const rCatVal = document.getElementById("rCat").value;
+  const rColVal = document.getElementById("rColName").value.trim()||"color";
+  if(dupeWarn(rCatVal, rColVal)) return;
+  db.garments.push({
+    id:"g"+uid(), name, cat:rCatVal,
+    colors:[{name:document.getElementById("rColName").value.trim()||"color", hex:document.getElementById("rColHex").value}],
+    pattern:document.getElementById("rPattern").value,
+    formality:+document.getElementById("rForm").value, warmth:+document.getElementById("rWarm").value,
+    seasons:[...document.querySelectorAll('input[name="rSeason"]:checked')].map(c=>c.value),
+    occasions:[...document.querySelectorAll('input[name="rOcc"]:checked')].map(c=>c.value),
+    fav:false, worn:0, score:0, status:"active", img:state.currentImg, rain:false,
+    price: priceVal? +priceVal : null, lastWorn:null
+  });
+  save();
+  nextReview();
+}
+
+/* ---------- profile analysis wizard (mock of /api/profile/skin-tone) ---------- */
+async function skinWithAI(dataUrl){
+  const prompt = `Seasonal color analysis from this photo. Judge undertone from jawline/neck relative to the sclera; lower confidence if lighting is tinted, filtered or overexposed. Reply ONLY JSON: {"undertone":"warm|cool|neutral|olive","depth":"fair|light|medium|medium-deep|deep","season":"e.g. warm autumn","jewelry":"gold|silver|both","confidence":"low|medium|high","best_colors":[{"name":"...","hex":"#RRGGBB"}],"avoid_colors":[{"name":"...","hex":"#RRGGBB"}],"caveats":"one sentence"} with 8-12 best colors and 2-5 avoid colors.`;
+  const text = await claude([{role:"user", content:[imgBlock(dataUrl), {type:"text", text:prompt}]}], {maxTokens:900});
+  return extractJson(text);
+}
+document.getElementById("facePick").addEventListener("change", ev=>{
+  const f = ev.target.files[0]; ev.target.value = "";
+  if(!f || !state.wiz) return;
+  const r = new FileReader();
+  r.onload = async ()=>{
+    state.wiz.face = r.result;
+    state.wiz.faceSample = await sampleSkin(r.result);
+    if(aiKey()){
+      try{ state.wiz.ai = await skinWithAI(r.result); }catch(e){ state.wiz.ai = null; }
+    }
+    wizRender();
+  };
+  r.readAsDataURL(f);
+});
+document.getElementById("bodyPick").addEventListener("change", ev=>{
+  const f = ev.target.files[0]; ev.target.value = "";
+  if(!f || !state.wiz) return;
+  const r = new FileReader();
+  r.onload = ()=>{ state.wiz.body = r.result; wizRender(); };
+  r.readAsDataURL(f);
+});
+function startWizard(){
+  state.wiz = { step:1, face:null, body:null, faceSample:null,
+    answers:{ veins:"unsure", jewelry:"both", sun:"mixed", hair:"brown", eyes:"brown", frame:"balanced", waist:"defined" } };
+  wizRender();
+}
+const radio = (name,opts,sel)=>`<div class="checks">${opts.map(o=>`<label><input type="radio" name="${name}" value="${o[0]}" ${sel===o[0]?"checked":""}>${o[1]}</label>`).join("")}</div>`;
+function wizSteps(n){ return `<div class="steps">${[1,2,3].map(i=>`<div class="s ${i<=n?"on":""}"></div>`).join("")}</div>`; }
+function wizRender(){
+  const w = state.wiz; if(!w) return;
+  if(w.step===1){
+    openModal(`<h2>Photos <button class="ghost" data-act="close">&times;</button></h2>${wizSteps(1)}
+    <label>Face photo &mdash; natural light, no filters</label>
+    <button class="photo-btn" data-act="wiz-face">${w.face?`<img src="${w.face}">`:"+ Click to add a selfie"}</button>
+    ${w.faceSample?`<div class="pal" style="margin-top:8px">
+      <span class="chip"><span class="dot" style="background:${w.faceSample.hex}"></span>sampled tone</span>
+      <span class="chip">${w.faceSample.undertone} leaning</span><span class="chip">${w.faceSample.depth}</span></div>`
+      : (w.face?`<div class="mini" style="margin-top:8px">Couldn't read a clear skin sample &mdash; your answers will decide.</div>`:"")}
+    <label>Body photo (optional)</label>
+    <button class="photo-btn" data-act="wiz-body">${w.body?`<img src="${w.body}">`:"+ Click to add a full-length photo"}</button>
+    <div class="note">Photos never leave this device in the prototype. In production they're sent once to <b>/api/profile/skin-tone</b> (Claude vision) for a proper read &mdash; with a confidence rating &mdash; and aren't stored.</div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="primary" data-act="wiz-next">Next: questions</button>
+      ${!w.face?'<button class="ghost" data-act="wiz-next">Skip photos</button>':""}</div>`);
+  } else if(w.step===2){
+    const a = w.answers;
+    openModal(`<h2>About you <button class="ghost" data-act="close">&times;</button></h2>${wizSteps(2)}
+    <div class="q">
+    <label>The veins on your wrist look&hellip;</label>${radio("q_veins",[["green","greenish"],["blue","blue-purple"],["unsure","hard to say"]],a.veins)}
+    <label>Which metal flatters you more?</label>${radio("q_jewelry",[["gold","gold"],["silver","silver"],["both","both equally"]],a.jewelry)}
+    <label>In the sun, your skin&hellip;</label>${radio("q_sun",[["tan","tans easily"],["burn","burns first"],["mixed","a bit of both"]],a.sun)}
+    <label>Hair color</label><select id="q_hair">${Object.keys(HAIR_DEPTH).map(h=>`<option ${a.hair===h?"selected":""}>${h}</option>`).join("")}</select>
+    <label>Eye color</label><select id="q_eyes">${["brown","hazel","green","blue","grey"].map(h=>`<option ${a.eyes===h?"selected":""}>${h}</option>`).join("")}</select>
+    <label>Which is visually wider?</label>${radio("q_frame",[["shoulders","shoulders"],["hips","hips"],["balanced","about equal"]],a.frame)}
+    <label>Your waist is&hellip;</label>${radio("q_waist",[["defined","defined"],["straight","fairly straight"]],a.waist)}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="primary" data-act="wiz-next">See results</button>
+      <button data-act="wiz-back">Back</button></div>`);
+  } else {
+    const r = wizCompute(); w.result = r;
+    openModal(`<h2>Your analysis <button class="ghost" data-act="close">&times;</button></h2>${wizSteps(3)}
+    <div class="pal">
+      <span class="chip">undertone: ${r.undertone}</span><span class="chip">depth: ${r.depth}</span>
+      <span class="chip">season: ${esc(cap(r.season))}</span><span class="chip">body: ${r.bodyType}</span>
+      <span class="chip">jewelry: ${r.jewelry}</span><span class="chip">confidence: ${r.confidence}</span>
+      ${w.faceSample?`<span class="chip"><span class="dot" style="background:${w.faceSample.hex}"></span>from your photo</span>`:""}
+    </div>
+    ${r.caveats?`<div class="mini" style="margin-top:8px">${esc(r.caveats)}</div>`:""}
+    <div class="mini" style="margin:12px 0 4px">Best colors (worn near the face)</div>
+    <div class="pal">${r.palette.best.map(c=>`<span class="chip"><span class="dot" style="background:${c[1]}"></span>${c[0]}</span>`).join("")}</div>
+    <div class="mini" style="margin:12px 0 4px">Avoid near the face</div>
+    <div class="pal">${r.palette.avoid.map(c=>`<span class="chip"><span class="dot" style="background:${c[1]}"></span>${c[0]}</span>`).join("")}</div>
+    <div class="note">Heuristic read from your ${w.faceSample?"photo sample and answers":"answers"}. In production Claude vision weighs the photo properly and explains its reasoning &mdash; and you can still edit every value afterwards.</div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="primary" data-act="wiz-apply">Apply to profile</button>
+      <button data-act="wiz-back">Back</button></div>`);
+  }
+}
+function wizNext(){
+  const w = state.wiz; if(!w) return;
+  if(w.step===2){
+    ["veins","jewelry","sun","frame","waist"].forEach(n=>{
+      const el = document.querySelector(`input[name="q_${n}"]:checked`); if(el) w.answers[n]=el.value; });
+    ["hair","eyes"].forEach(n=>{ const el = document.getElementById("q_"+n); if(el) w.answers[n]=el.value; });
+  }
+  w.step = Math.min(3, w.step+1); wizRender();
+}
+function wizCompute(){
+  const w = state.wiz, a = w.answers;
+  const bodyTypeFromAnswers = a.frame==="shoulders"?"inverted triangle": a.frame==="hips"?"pear": a.waist==="defined"?"hourglass":"rectangle";
+  if(w.ai){
+    const r2 = w.ai;
+    return { undertone: r2.undertone||"neutral", depth: r2.depth||"medium",
+      season: String(r2.season||"soft summer").toLowerCase(), bodyType: bodyTypeFromAnswers,
+      jewelry: r2.jewelry||"both", confidence: (r2.confidence||"medium")+" (Claude vision)",
+      palette: { best:(r2.best_colors||[]).map(c=>[c.name, c.hex]), avoid:(r2.avoid_colors||[]).map(c=>[c.name, c.hex]) },
+      caveats: r2.caveats||"" };
+  }
+  const votes = {warm:0, cool:0, neutral:0};
+  const map = { veins:{green:"warm",blue:"cool",unsure:"neutral"},
+                jewelry:{gold:"warm",silver:"cool",both:"neutral"},
+                sun:{tan:"warm",burn:"cool",mixed:"neutral"} };
+  for(const q in map) votes[map[q][a[q]]] += 1;
+  if(w.faceSample) votes[w.faceSample.undertone] += 2;
+  let undertone = "neutral", mx = -1;
+  for(const k of ["warm","cool","neutral"]) if(votes[k]>mx){ mx=votes[k]; undertone=k; }
+  if(votes.warm===votes.cool && votes.warm>=votes.neutral) undertone = "neutral";
+  const depth = w.faceSample ? w.faceSample.depth : (HAIR_DEPTH[a.hair]||"medium");
+  const light = depth==="fair"||depth==="light";
+  const deep = depth==="medium-deep"||depth==="deep";
+  let season;
+  if(undertone==="warm") season = light?"warm spring": deep?"deep autumn":"warm autumn";
+  else if(undertone==="cool") season = light?"light summer": deep?"cool winter":"cool summer";
+  else season = deep?"soft autumn":"soft summer";
+  const bodyType = a.frame==="shoulders"?"inverted triangle": a.frame==="hips"?"pear": a.waist==="defined"?"hourglass":"rectangle";
+  const jewelry = a.jewelry==="gold"?"gold": a.jewelry==="silver"?"silver":"both";
+  const confidence = w.faceSample?"medium-high":"medium-low";
+  return { undertone, depth, season, bodyType, jewelry, confidence, palette: PALETTES[season] };
+}
+function wizApply(){
+  const r = (state.wiz && state.wiz.result) || wizCompute();
+  Object.assign(db.profile, {
+    undertone:r.undertone, depth:r.depth, season:cap(r.season), bodyType:r.bodyType, jewelry:r.jewelry,
+    bestColors: r.palette.best.map(c=>({name:c[0], hex:c[1]})),
+    avoidColors: r.palette.avoid.map(c=>({name:c[0], hex:c[1]}))
+  });
+  const first = !db.onboarded;
+  db.onboarded = true;
+  save(); state.wiz = null; closeModal(); state.view = first ? "dashboard" : "profile"; render();
+}
+function welcomeModal(){
+  openModal(`<h2 style="display:block">Welcome to wo<span style="color:var(--accent)">drobe</span></h2>
+  <div class="sub" style="margin-top:6px">Your wardrobe, digitized &mdash; with a stylist who knows your coloring.</div>
+  <div class="note" style="margin-top:14px">First, a two-minute analysis: a selfie, an optional full-length photo and seven quick questions. The stylist derives your undertone, color season, flattering palette and body type &mdash; every outfit it suggests is matched against them. You can redo or edit all of it later under Profile.</div>
+  <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="primary" data-act="wiz-start">Start my analysis</button>
+    <button class="ghost" data-act="onboard-skip">Skip for now</button></div>`);
+}
+
+/* ---------- stylist chat ---------- */
+function chatHtml(){
+  if(!db.chat.length) return `<div class="mini">e.g. &ldquo;What should I wear to a gallery opening?&rdquo; &middot; &ldquo;Why never the camel coat?&rdquo;</div>`;
+  return db.chat.map(m=>`<div style="align-self:${m.role==="user"?"flex-end":"flex-start"};max-width:85%;background:${m.role==="user"?"var(--accent-soft)":"var(--chip)"};border-radius:12px;padding:8px 12px;font-size:13.5px;line-height:1.55;white-space:pre-wrap">${esc(m.text)}</div>`).join("");
+}
+function chatModal(){
+  openModal(`<h2>Stylist chat <button class="ghost" data-act="close">&times;</button></h2>
+  <div id="chatLog" style="max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:12px 0">${chatHtml()}</div>
+  <div style="display:flex;gap:8px"><input id="chatIn" placeholder="${aiKey()?"Ask anything &mdash; outfits, gaps, why-nots&hellip;":"Ask about an occasion or an item&hellip;"}">
+  <button class="primary" data-act="chat-send">${state.chatBusy?"&hellip;":"Send"}</button></div>
+  ${aiKey()?"":`<div class="mini" style="margin-top:8px">Limited local mode &mdash; connect Claude under Profile for real conversations with full wardrobe context.</div>`}`);
+  const inp = document.getElementById("chatIn");
+  if(inp){
+    inp.focus();
+    inp.addEventListener("keydown", ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); chatSend(); } });
+  }
+  const log = document.getElementById("chatLog");
+  if(log) log.scrollTop = log.scrollHeight;
+}
+function chatLocal(q){
+  const ql = q.toLowerCase();
+  const item = db.garments.find(g=>{
+    const last = g.name.toLowerCase().split(" ").pop();
+    return ql.includes(last) && (ql.includes(g.colors[0].name.toLowerCase()) || ql.includes(g.name.toLowerCase()));
+  });
+  if(/why/.test(ql) && item){
+    const fitW = Math.abs(item.warmth - targetWarmth(state.temp)) > 2;
+    const fitO = item.occasions.includes(state.occ);
+    return `${item.name}: occasions ${item.occasions.join("/")}, warmth ${item.warmth}/5, formality ${item.formality}/5. For "${state.occ}" at ${state.temp}°C it ${fitW?"gets filtered out on warmth":!fitO?"doesn't carry that occasion tag":"is in the running — it just scored below the picks (favorites, palette fit and wear history all weigh in)"}.`;
+  }
+  const occ = OCCS.find(o=>ql.includes(o)) || (/wedding|gala|interview|funeral/.test(ql)?"formal":null);
+  if(occ){
+    const {combos} = buildCombos(occ, state.temp, state.rain, null, "all");
+    if(combos.length){
+      return `For ${occ} at ~${state.temp}°C I'd reach for: ${combos[0].items.map(g=>g.name).join(" + ")}. Open Dress me for alternatives with reasoning.`;
+    }
+    return `Nothing in the wardrobe cleanly fits ${occ} at ${state.temp}°C — that's a gap worth filling.`;
+  }
+  return "In local mode I can answer “why not <item>” and quick occasion picks. Connect your Claude key under Profile for full conversations.";
+}
+async function chatSend(){
+  const inp = document.getElementById("chatIn");
+  if(!inp || state.chatBusy) return;
+  const q = inp.value.trim(); if(!q) return;
+  db.chat.push({role:"user", text:q});
+  state.chatBusy = true; save(); chatModal();
+  let reply;
+  if(aiKey()){
+    try{
+      const hist = db.chat.slice(-12).map(m=>({role:m.role==="user"?"user":"assistant", content:m.text}));
+      reply = await claude(hist, {maxTokens:700,
+        system:`You are the user's personal stylist inside their wardrobe app. Be specific and reference their actual items by name. Keep replies under 120 words.\nWARDROBE: ${catalogJson()}\nPROFILE: ${profileBrief()}\nToday: ${isoOf(new Date())}, ~${state.temp}°C${state.rain?", rain":""}.`});
+    }catch(e){ reply = "(AI error: "+e.message+")"; }
+  } else reply = chatLocal(q);
+  db.chat.push({role:"ai", text:reply});
+  db.chat = db.chat.slice(-40);
+  state.chatBusy = false; save(); chatModal();
+}
+
+/* ---------- mirror check ---------- */
+async function mirrorCheck(dataUrl){
+  openModal(`<h2>Mirror check <button class="ghost" data-act="close">&times;</button></h2>
+  <img class="rev-img" src="${dataUrl}">
+  <div id="mirrorOut"><div class="empty">Looking you over&hellip;</div></div>`);
+  let html;
+  if(aiKey()){
+    try{
+      const text = await claude([{role:"user", content:[imgBlock(dataUrl), {type:"text",
+        text:`Quick outfit check. Context: occasion=${state.occ}, ~${state.temp}°C${state.rain?", rain expected":""}. ${profileBrief()} Reply ONLY JSON {"score":7,"works":["..."],"tweaks":["..."],"verdict":"one warm, honest sentence"} (score 1-10).`}]}], {maxTokens:500});
+      const d = extractJson(text);
+      html = `<div class="stat-num" style="margin-top:4px">${Math.min(10,Math.max(1,+d.score||5))}/10</div>
+        <div class="mini" style="margin:8px 0 4px">What works</div><div class="pal">${(d.works||[]).map(w=>`<span class="chip">${esc(w)}</span>`).join("")}</div>
+        <div class="mini" style="margin:10px 0 4px">Tweaks</div><div class="pal">${(d.tweaks||[]).map(w=>`<span class="chip">${esc(w)}</span>`).join("")}</div>
+        <div class="reason" style="margin-top:10px">${esc(d.verdict||"")}</div>`;
+    }catch(e){ html = `<div class="mini">AI error: ${esc(e.message)}</div>`; }
+  } else {
+    const hex = await dominantColor(dataUrl);
+    const cname = nearestColorName(hex);
+    const inPal = db.profile.bestColors.some(c=>c.name.toLowerCase()===cname);
+    const neutral = NEUTRALS.includes(cname);
+    html = `<div class="pal"><span class="chip"><span class="dot" style="background:${hex}"></span>dominant: ${esc(cname)}</span></div>
+      <div class="reason" style="margin-top:10px">${inPal? `${cap(cname)} sits right in your ${esc(db.profile.season.toLowerCase())} palette — good call near the face.`
+        : neutral? `Neutral-led look — clean and safe. An accent from your palette (${db.profile.bestColors.slice(0,3).map(c=>c.name).join(", ")}) would lift it.`
+        : `${cap(cname)} isn't on your best-colors list — consider keeping it away from your face or balancing it with ${esc(db.profile.bestColors[0].name)}.`}</div>
+      <div class="mini" style="margin-top:10px">Local heuristic — connect Claude under Profile for a real critique with a score.</div>`;
+  }
+  const out = document.getElementById("mirrorOut");
+  if(out) out.innerHTML = html;
+}
+
+/* ---------- resale assist ---------- */
+async function listingModal(gid){
+  const g = db.garments.find(x=>x.id===gid); if(!g) return;
+  openModal(`<h2>Sell this <button class="ghost" data-act="close">&times;</button></h2>
+  <div class="mini" style="margin:6px 0 10px">${esc(g.name)} &middot; listing draft for Vinted / eBay / Depop</div>
+  <textarea id="listingText" style="min-height:150px">Writing&hellip;</textarea>
+  <div class="actions" style="margin-top:12px">
+    <button class="primary" data-act="copy-listing">Copy text</button>
+    <button data-act="retire" data-id="${g.id}">Mark as gone</button></div>
+  <div class="mini" style="margin-top:10px">${aiKey()?"Written by Claude from the item's metadata.":"Template draft — connect Claude under Profile for a tailored listing."}</div>`);
+  const ask = g.price ? "$"+Math.max(5, Math.round(g.price*0.4)) : "open to offers";
+  let text = null;
+  if(aiKey()){
+    try{
+      text = await claude([{role:"user", content:`Write a short, honest resale listing (60-90 words, no hashtags, no emoji) for: ${JSON.stringify({name:g.name, category:g.cat, colors:g.colors.map(c=>c.name), pattern:g.pattern, condition:g.condition, times_worn:g.worn, original_price:g.price, asking:ask})}`}], {maxTokens:300});
+    }catch(e){ text = null; }
+  }
+  if(!text){
+    text = `${g.name} — ${g.colors.map(c=>c.name).join("/")} ${g.pattern!=="solid"? g.pattern+" ":""}${CAT_NOUN[g.cat]||g.cat}. Condition: ${g.condition}${g.worn?` (worn ${g.worn}×, well cared for)`:" (barely worn)"}.${g.seasons.length<4?` Great for ${g.seasons.join("/")}.`:""} From a smoke-free home. Asking ${ask}.`;
+  }
+  const ta = document.getElementById("listingText");
+  if(ta) ta.value = text;
+}
+
+/* ---------- wear calendar ---------- */
+function viewCalendar(){
+  const base = new Date(); base.setDate(1); base.setMonth(base.getMonth()+state.calOffset);
+  const y = base.getFullYear(), m = base.getMonth();
+  const monthName = base.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  const firstDow = (new Date(y,m,1).getDay()+6)%7;
+  const dim = new Date(y,m+1,0).getDate();
+  const todayIso = isoOf(new Date());
+  const logs = {}; db.wearLog.forEach(l=>logs[l.date]=l);
+  let cells = "";
+  for(let i=0;i<firstDow;i++) cells += "<div></div>";
+  for(let d=1; d<=dim; d++){
+    const iso = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const l = logs[iso];
+    const dots = l ? `<span class="cal-dots">${l.items.slice(0,3).map(gid=>{
+      const g = db.garments.find(x=>x.id===gid);
+      return `<i style="background:${g&&g.colors[0]?g.colors[0].hex:"#999"}"></i>`;
+    }).join("")}</span>` : "";
+    cells += `<button class="cal-cell ${iso===todayIso?"today":""} ${l?"logged":""}" data-act="cal-day" data-id="${iso}"><span>${d}</span>${dots}</button>`;
+  }
+  const mk = `${y}-${String(m+1).padStart(2,"0")}`;
+  const count = db.wearLog.filter(l=>l.date.startsWith(mk)).length;
+  return `
+  <div class="topline"><div><h1>Wear calendar</h1>
+    <div class="sub">Log what you actually wore &mdash; it feeds the stylist's learning and your stats</div></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button data-act="cal-prev">&larr;</button>
+      <b style="min-width:130px;text-align:center;font-size:14px">${monthName}</b>
+      <button data-act="cal-next">&rarr;</button></div></div>
+  <div class="cal-head">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d=>`<div>${d}</div>`).join("")}</div>
+  <div class="cal-grid">${cells}</div>
+  <div class="mini" style="margin-top:12px">${count} outfit${count===1?"":"s"} logged this month. Tap any day to log or review.</div>`;
+}
+function dayModal(iso){
+  const l = db.wearLog.find(x=>x.date===iso);
+  const dateLabel = new Date(iso+"T12:00").toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  if(l){
+    const items = l.items.map(id=>db.garments.find(g=>g.id===id)).filter(Boolean);
+    openModal(`<h2>${dateLabel} <button class="ghost" data-act="close">&times;</button></h2>
+    <div class="mini" style="margin:6px 0">${esc(l.title||"Logged outfit")}</div>
+    <div class="opt-items">${items.map(g=>tile(g,g.cat)).join("")}</div>
+    <div class="actions"><button class="btn-bad ghost" data-act="cal-unlog" data-id="${iso}">Remove this log</button></div>`);
+  } else {
+    const saved = db.outfits.slice().reverse();
+    openModal(`<h2>${dateLabel} <button class="ghost" data-act="close">&times;</button></h2>
+    <div class="mini" style="margin:6px 0 12px">What did you wear? Pick a saved look to log it.</div>
+    ${saved.length? saved.map(o=>{
+      const its = o.items.map(id=>db.garments.find(g=>g.id===id)).filter(Boolean);
+      return `<div class="card" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><b style="font-size:14px">${esc(o.title)}</b><div class="mini">${its.map(g=>esc(g.name)).join(" + ")}</div></div>
+        <button class="primary" data-act="cal-log" data-id="${o.id}" data-date="${iso}">Log</button></div>`;
+    }).join("") : `<div class="empty">No saved looks yet &mdash; generate and save one under Dress me first.</div>`}`);
+  }
+}
+
+/* ---------- AI event & trip planner (mock of the Claude itinerary call) ---------- */
+const MOMENT_RULES = [
+  {re:/black.?tie|gala|tuxedo|ball\b/i, label:"Black-tie evening", occ:"formal", time:"evening", formalMin:5, amen:["formal shoes + care kit"]},
+  {re:/wedding|ceremony/i, label:"Ceremony", occ:"formal", time:"afternoon"},
+  {re:/cocktail/i, label:"Cocktail hour", occ:"formal", time:"evening"},
+  {re:/conference|meeting|client|office|presentation|summit/i, label:"Business hours", occ:"work", time:"day"},
+  {re:/dinner|restaurant|reception/i, label:"Dinner", occ:"date", time:"evening"},
+  {re:/party|night ?out|club\b|until late/i, label:"Night out", occ:"date", time:"night"},
+  {re:/beach|pool|swim/i, label:"Beach / pool", occ:"casual", time:"day", amen:["swimwear","beach towel","sunscreen","sunglasses"]},
+  {re:/hik(e|ing)|trail|trek|viewpoint/i, label:"Hike", occ:"sport", time:"day", amen:["water bottle"]},
+  {re:/gym|run\b|running|workout|yoga/i, label:"Workout", occ:"sport", time:"morning"},
+  {re:/sightsee|museum|old town|city walk|explor|market/i, label:"Sightseeing", occ:"travel", time:"day", amen:["day bag"]},
+  {re:/flight|fly\b|airport|train\b/i, label:"Travel leg", occ:"travel", time:"day", amen:["passport / ID","travel adapter","power bank"]},
+  {re:/brunch|breakfast/i, label:"Brunch", occ:"casual", time:"morning"},
+];
+const TIME_ORDER = {morning:0, day:1, afternoon:2, evening:3, night:4};
+const tempFor = (base,time) => time==="morning"?base-3 : time==="evening"?base-5 : time==="night"?base-7 : base;
+
+function parseMoments(text, dayCount){
+  if(!text) return [];
+  const moments = [];
+  text.split(/[.;\n]+/).map(s=>s.trim()).filter(Boolean).forEach(sen=>{
+    let day = null;
+    const dm = sen.match(/day\s*(\d+)/i);
+    if(dm) day = Math.min(dayCount, Math.max(1, +dm[1]));
+    MOMENT_RULES.forEach(r=>{
+      if(r.re.test(sen)) moments.push({label:r.label, occ:r.occ, time:r.time, formalMin:r.formalMin||0, amen:r.amen||[], day});
+    });
+  });
+  let next = 1;
+  moments.forEach(m=>{ if(!m.day){ m.day = ((next-1)%dayCount)+1; next++; } });
+  return moments;
+}
+
+function tripModal(evId){
+  const ev = db.events.find(e=>e.id===evId); if(!ev) return;
+  const multi = !!ev.end;
+  openModal(`<h2>AI plan <button class="ghost" data-act="close">&times;</button></h2>
+  <div class="mini" style="margin:6px 0 10px">${esc(ev.title)} &middot; ${fmtDate(ev.date)}${multi?` &ndash; ${fmtDate(ev.end)}`:""}${ev.location?` &middot; ${esc(ev.location)}`:""}</div>
+  ${ev.notes? `<div class="note" style="margin-bottom:10px"><b>Your plan, as the AI reads it:</b><br>${esc(ev.notes)}</div>`
+    : `<div class="note" style="margin-bottom:10px">No description on this event &mdash; the plan will be generic. Describe the moments (dinners, meetings, beach, nights out&hellip;) when adding an event for moment-by-moment planning.</div>`}
+  <label>Expected daytime temperature: <b id="tripTempOut">18&deg;C</b></label>
+  <input type="range" id="tripTemp" min="-10" max="35" step="1" value="18">
+  <label class="chip" style="cursor:pointer;display:inline-flex;gap:6px;margin-top:10px"><input type="checkbox" id="tripRain" style="width:auto"> rain likely</label>
+  <div style="margin-top:16px"><button class="primary" data-act="trip-build" data-id="${ev.id}">Build the plan</button></div>`);
+}
+async function buildPlan(evId){
+  const ev = db.events.find(e=>e.id===evId); if(!ev) return;
+  const tEl = document.getElementById("tripTemp"); const temp = tEl ? +tEl.value : 18;
+  const rEl = document.getElementById("tripRain"); const rain = rEl ? rEl.checked : false;
+  const days = []; let d = new Date(ev.date+"T12:00"); const end = new Date((ev.end||ev.date)+"T12:00");
+  while(d<=end && days.length<10){ days.push(isoOf(d)); d = new Date(d.getTime()+86400000); }
+  openModal(`<h2>Planning&hellip;</h2><div class="empty">${aiKey()?"Claude is reading your itinerary and dressing every moment.":"Building the plan from your description."}</div>`);
+  const perDay = await weatherForTrip(ev.location, days);
+  if(aiKey()){
+    try{
+      await buildPlanAI(ev, days, temp, rain, perDay);
+      tripResultModal(ev.id); render(); return;
+    }catch(e){ /* fall back to local rules */ }
+  }
+  buildPlanLocal(ev, days, temp, rain, perDay);
+  tripResultModal(ev.id); render();
+}
+async function buildPlanAI(ev, days, temp, rain, perDay){
+  const wx = days.map(d=>({date:d, high: perDay&&perDay[d]?perDay[d].temp:temp, rain: perDay&&perDay[d]?perDay[d].rain:rain}));
+  const prompt = `EVENT: ${JSON.stringify({title:ev.title, type:ev.type, location:ev.location, dress_code:ev.dressCode, description:ev.notes, days:wx})}
+WARDROBE CATALOG: ${catalogJson()}
+PROFILE: ${profileBrief()}
+Plan every moment of this ${days.length>1?"trip":"event"}: day activities, evenings (respect dress codes), nights including sleep/lounge, using ONLY catalog ids. Maximize re-wear across days. If a moment has no suitable item, set items empty and explain in "gap". Reply ONLY JSON:
+{"days":[{"date":"YYYY-MM-DD","segments":[{"label":"...","time":"morning|day|afternoon|evening|night","item_ids":["..."],"reason":"weather + location + the user's coloring/style","gap":null}]}],"packing":["ids"],"amenities":["swimwear","sunscreen","travel adapter"]}`;
+  const text = await claude([{role:"user", content:prompt}], {maxTokens:3000, system:"You are a personal stylist and travel packer. Reply only with JSON."});
+  const data = extractJson(text);
+  const valid = id => db.garments.some(g=>g.id===id);
+  const daysOut = (data.days||[]).map(p=>({ date:p.date, segs:(p.segments||[]).map(s=>({
+    label:s.label||"Moment", time: TIME_ORDER[s.time]!=null? s.time : "day",
+    items:(s.item_ids||[]).filter(valid), reason:s.reason||"", gap:s.gap||null })) }));
+  if(!daysOut.length || !daysOut.some(p=>p.segs.length)) throw new Error("empty plan");
+  const packing = [...new Set([...(data.packing||[]).filter(valid), ...daysOut.flatMap(p=>p.segs.flatMap(s=>s.items))])];
+  db.trips[ev.id] = {v:2, temp, rain, packing, amenities:(data.amenities||[]).map(String).slice(0,16), days:daysOut, ai:true};
+  save();
+}
+function buildPlanLocal(ev, days, temp, rain, perDay){
+  const baseOcc = ev.type==="formal"?"formal": ev.type==="work"?"work": ev.type==="sport"?"sport": ev.type==="date"?"date": ev.end?"travel":"casual";
+  const moments = parseMoments(ev.notes||"", days.length);
+  const lounge = db.garments.filter(g=>g.status==="active" && g.occasions.includes("lounge")).slice(0,2);
+  const packed = new Set(); const plannedDays = []; let prevAnchor = null;
+  const anchorOf = items => { const a = items.find(g=>g.cat==="top"||g.cat==="dress"); return a ? a.id : null; };
+  days.forEach((date,di)=>{
+    const dayTemp = perDay && perDay[date] ? perDay[date].temp : temp;
+    const dayRain = perDay && perDay[date] ? perDay[date].rain : rain;
+    const segsRaw = moments.filter(m=>m.day===di+1).map(m=>({label:m.label, time:m.time, occ:m.occ, formalMin:m.formalMin}));
+    if(!segsRaw.some(s=>TIME_ORDER[s.time]<=2))
+      segsRaw.unshift({label: ev.end?"Daytime":"The event", time:"day", occ:baseOcc, formalMin:0});
+    segsRaw.sort((a,b)=>TIME_ORDER[a.time]-TIME_ORDER[b.time]);
+    const segs = segsRaw.map(seg=>{
+      const t = tempFor(dayTemp, seg.time);
+      const {combos} = buildCombos(seg.occ, t, dayRain, packed);
+      const floor = (ev.dressCode && seg.occ!=="sport") ? 3 : 0;
+      const meetsFloor = c => Math.min(...c.items.map(i=>i.formality)) >= floor;
+      const pick = combos.find(c=>anchorOf(c.items)!==prevAnchor && meetsFloor(c))
+        || combos.find(meetsFloor) || combos.find(c=>anchorOf(c.items)!==prevAnchor) || combos[0];
+      if(!pick) return {label:seg.label, time:seg.time, items:[], reason:"",
+        gap:`nothing in your wardrobe fits this — a gap to fill`};
+      let gap = null;
+      if(seg.formalMin>=5 && Math.min(...pick.items.map(i=>i.formality))<4)
+        gap = "nothing true black-tie — closest match shown";
+      prevAnchor = anchorOf(pick.items);
+      pick.items.forEach(g=>packed.add(g.id));
+      const reason = `${seg.time==="day"?"Daytime":cap(seg.time)}, ~${t}&deg;${ev.location?` in ${esc(ev.location)}`:""}${perDay&&perDay[date]?" (live forecast)":""}. `
+        + buildReason(pick.items, seg.occ, t, targetWarmth(t), dayRain);
+      return {label:seg.label, time:seg.time, items:pick.items.map(g=>g.id), reason, gap};
+    });
+    if(ev.end) segs.push({label:"Night in", time:"night", items:lounge.map(g=>g.id),
+      reason: lounge.length? "Wind-down comfort back at the hotel." : "", gap: lounge.length? null : "pack sleepwear"});
+    plannedDays.push({date, segs});
+  });
+  lounge.forEach(g=>packed.add(g.id));
+  const amen = new Set(["toiletries kit","phone & chargers"]);
+  moments.forEach(m=>m.amen.forEach(a=>amen.add(a)));
+  if(rain) amen.add("compact umbrella");
+  if(temp>=23){ amen.add("sunscreen"); amen.add("sunglasses"); }
+  if(temp<=5) amen.add("gloves & scarf");
+  if(days.length>=4) amen.add("laundry bag");
+  if(ev.end && !lounge.length) amen.add("sleepwear");
+  db.trips[ev.id] = {v:2, temp, rain, packing:[...packed], amenities:[...amen], days:plannedDays};
+  save();
+}
+function tripResultModal(evId){
+  const ev = db.events.find(e=>e.id===evId), t = db.trips[evId]; if(!ev || !t) return;
+  if(!t.v){ tripModal(evId); return; }
+  const packing = t.packing.map(id=>db.garments.find(g=>g.id===id)).filter(Boolean);
+  openModal(`<h2>AI plan <button class="ghost" data-act="close">&times;</button></h2>
+  <div class="mini" style="margin:6px 0 12px">${esc(ev.title)}${ev.location?` &middot; ${esc(ev.location)}`:""} &middot; ${t.days.length} day${t.days.length===1?"":"s"} &middot; ~${t.temp}&deg;C${t.rain?", rain expected":""} &middot; <b>${packing.length} pieces</b></div>
+  ${t.days.map(p=>`
+    <div style="margin-bottom:6px">
+      <h3 style="margin:10px 0 2px">${fmtDate(p.date)}</h3>
+      ${p.segs.map(s=>`
+        <div style="border-top:1px solid var(--line);padding:8px 0">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span class="chip">${s.time}</span><b style="font-size:13.5px">${esc(s.label)}</b>
+            ${s.gap?`<span class="chip" style="color:var(--bad)">${esc(s.gap)}</span>`:""}
+          </div>
+          ${s.items.length?`<div class="opt-items" style="margin:8px 0 0">${s.items.map(id=>{const g=db.garments.find(x=>x.id===id); return g?tile(g,g.cat):"";}).join("")}</div>`:""}
+          ${s.reason?`<div class="reason" style="margin:8px 0 0">${s.reason}</div>`:""}
+        </div>`).join("")}
+    </div>`).join("")}
+  <div class="mini" style="margin:14px 0 4px">Packing list</div>
+  <div class="opt-items">${packing.map(g=>tile(g,g.cat)).join("")}</div>
+  <div class="mini" style="margin:12px 0 4px">Don't forget</div>
+  <div class="pal">${t.amenities.map(a=>`<span class="chip">${esc(a)}</span>`).join("")}</div>
+  <div class="note" style="margin-top:14px">Prototype: keyword rules parse your description on-device. In production Claude reads it whole &mdash; every moment, dress code and amenity &mdash; against the real per-day forecast${ev.location?` for ${esc(ev.location)}`:""}, your palette and your learned style.</div>
+  <div style="margin-top:14px"><button class="ghost" data-act="plan-trip" data-id="${ev.id}">Rebuild</button></div>`);
+}
+
+/* ---------- render & events ---------- */
+const main = document.getElementById("main");
+const views = {dashboard:viewDashboard, wardrobe:viewWardrobe, dress:viewDress, calendar:viewCalendar, events:viewEvents, profile:viewProfile};
+function render(){
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active", b.dataset.v===state.view));
+  main.innerHTML = views[state.view]();
+}
+
+document.addEventListener("click", async e=>{
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const act = el.dataset.act, id = el.dataset.id, i = +el.dataset.i;
+  switch(act){
+    case "nav": state.view = el.dataset.v; render(); break;
+    case "close": closeModal(); break;
+    case "filter": state.filter = id; render(); break;
+    case "filter-stored": state.view = "wardrobe"; state.filter = "stored"; render(); break;
+    case "add-garment": document.getElementById("filePick").click(); break;
+    case "add-manual": addGarmentModal(); break;
+    case "review-save": saveReview(); break;
+    case "review-skip": nextReview(); break;
+    case "mode-single": startQueue("single"); break;
+    case "mode-outfit": startQueue("outfit"); break;
+    case "wiz-start": startWizard(); break;
+    case "wiz-face": document.getElementById("facePick").click(); break;
+    case "wiz-body": document.getElementById("bodyPick").click(); break;
+    case "wiz-next": wizNext(); break;
+    case "wiz-back": if(state.wiz){ state.wiz.step = Math.max(1, state.wiz.step-1); wizRender(); } break;
+    case "wiz-apply": wizApply(); break;
+    case "onboard-skip": db.onboarded = true; save(); closeModal(); break;
+    case "mock-ai": mockAI(); break;
+    case "save-garment": saveGarment(); break;
+    case "open-garment": garmentDetail(id); break;
+    case "fav-toggle": { const g = db.garments.find(x=>x.id===id); g.fav=!g.fav; save(); garmentDetail(id); render(); break; }
+    case "worn-plus": { const g = db.garments.find(x=>x.id===id); g.worn=(g.worn||0)+1; save(); garmentDetail(id); render(); break; }
+    case "retire": { const g = db.garments.find(x=>x.id===id); g.status="retired"; save(); closeModal(); render(); break; }
+    case "del-garment": { db.garments = db.garments.filter(x=>x.id!==id); save(); closeModal(); render(); break; }
+    case "generate": readDressInputs(); state.generating=true; render(); await generate(); state.generating=false; render(); break;
+    case "opt-save": {
+      const o = state.options[i]; if(!o) break;
+      db.outfits.push({id:"o"+uid(), title:o.title.replace(/ — option \d+$/,""), items:o.items, occ:o.occ, temp:o.temp,
+        hash:o.hash, date:new Date().toISOString().slice(0,10), wornCount:0});
+      o.items.forEach(gid=>{ const g=db.garments.find(x=>x.id===gid); if(g) g.score=(g.score||0)+1; });
+      updatePairs(o.items, 1);
+      state.options.splice(i,1); save(); render(); break; }
+    case "opt-wear": {
+      const o = state.options[i]; if(!o) break;
+      const today = isoOf(new Date());
+      const savedLook = {id:"o"+uid(), title:o.title.replace(/ — option \d+$/,""), items:o.items, occ:o.occ, temp:o.temp,
+        hash:o.hash, date:today, wornCount:1};
+      db.outfits.push(savedLook);
+      db.wearLog = db.wearLog.filter(l=>l.date!==today);
+      db.wearLog.push({date:today, outfitId:savedLook.id, items:o.items.slice(), title:savedLook.title});
+      o.items.forEach(gid=>{ const g=db.garments.find(x=>x.id===gid); if(g){ g.worn=(g.worn||0)+1; g.lastWorn=today; g.score=(g.score||0)+1; } });
+      updatePairs(o.items, 1);
+      state.options.splice(i,1); save(); render(); break; }
+    case "opt-reject": {
+      const o = state.options[i]; if(!o) break;
+      db.rejected.push(o.hash);
+      o.items.forEach(gid=>{ const g=db.garments.find(x=>x.id===gid); if(g) g.score=(g.score||0)-0.5; });
+      updatePairs(o.items, -1);
+      state.options.splice(i,1); save(); render(); break; }
+    case "today-wear": {
+      const pick = todaysPick(); if(!pick) break;
+      const today = isoOf(new Date());
+      const ids = pick.items.map(g=>g.id);
+      const savedLook = {id:"o"+uid(), title:`${cap(pick.occ)} — today's pick`, items:ids, occ:pick.occ, temp:state.temp,
+        hash:comboHash(pick.items), date:today, wornCount:1};
+      db.outfits.push(savedLook);
+      db.wearLog = db.wearLog.filter(l=>l.date!==today);
+      db.wearLog.push({date:today, outfitId:savedLook.id, items:ids, title:savedLook.title});
+      pick.items.forEach(g=>{ g.worn=(g.worn||0)+1; g.lastWorn=today; g.score=(g.score||0)+1; });
+      updatePairs(ids, 1); save(); render(); break; }
+    case "share-outfit": shareOutfit((el.dataset.ids||"").split(","), el.dataset.title||"My look"); break;
+    case "preset-save": {
+      const name = prompt("Preset name (e.g. Office default):"); if(!name) break;
+      readDressInputs();
+      db.presets.push({name:name.trim().slice(0,24), occ:state.occ, temp:state.temp, rain:state.rain});
+      save(); render(); break; }
+    case "preset-apply": { const p = db.presets[i]; if(!p) break;
+      Object.assign(state, {occ:p.occ, temp:p.temp, rain:p.rain}); render(); break; }
+    case "preset-del": db.presets.splice(i,1); save(); render(); break;
+    case "chat-open": chatModal(); break;
+    case "chat-send": await chatSend(); break;
+    case "mirror-check": readDressInputs(); document.getElementById("mirrorPick").click(); break;
+    case "weather-enable": enableWeather(); break;
+    case "sell-item": listingModal(id); break;
+    case "copy-listing": {
+      const t = document.getElementById("listingText");
+      if(t){ navigator.clipboard.writeText(t.value); el.textContent = "Copied!"; } break; }
+    case "store-toggle": {
+      const g = db.garments.find(x=>x.id===id); if(!g) break;
+      g.status = g.status==="stored" ? "active" : "stored";
+      save(); closeModal(); render(); break; }
+    case "wish-add": {
+      const label = el.dataset.label;
+      if(label && !db.wishlist.some(w=>w.label===label)){ db.wishlist.push({label}); save(); render(); } break; }
+    case "wish-del": db.wishlist.splice(i,1); save(); render(); break;
+    case "wish-got": db.wishlist.splice(i,1); save(); render(); document.getElementById("filePick").click(); break;
+    case "import-data": document.getElementById("importPick").click(); break;
+    case "wore-outfit": {
+      const o = db.outfits.find(x=>x.id===id); if(!o) break;
+      o.wornCount=(o.wornCount||0)+1;
+      const today = isoOf(new Date());
+      o.items.forEach(gid=>{ const g=db.garments.find(x=>x.id===gid); if(g){ g.worn=(g.worn||0)+1; g.lastWorn=today; } });
+      db.wearLog = db.wearLog.filter(l=>l.date!==today);
+      db.wearLog.push({date:today, outfitId:o.id, items:o.items.slice(), title:o.title});
+      updatePairs(o.items, 0.5);
+      save(); render(); break; }
+    case "laundry-toggle": {
+      const g = db.garments.find(x=>x.id===id); if(!g) break;
+      g.status = g.status==="laundry" ? "active" : "laundry";
+      save(); closeModal(); render(); break; }
+    case "cal-prev": state.calOffset--; render(); break;
+    case "cal-next": state.calOffset++; render(); break;
+    case "cal-day": dayModal(id); break;
+    case "cal-log": {
+      const o = db.outfits.find(x=>x.id===id); const date = el.dataset.date;
+      if(!o || !date) break;
+      db.wearLog = db.wearLog.filter(l=>l.date!==date);
+      db.wearLog.push({date, outfitId:o.id, items:o.items.slice(), title:o.title});
+      o.wornCount = (o.wornCount||0)+1;
+      o.items.forEach(gid=>{ const g=db.garments.find(x=>x.id===gid); if(g){ g.worn=(g.worn||0)+1; if(!g.lastWorn||g.lastWorn<date) g.lastWorn=date; } });
+      updatePairs(o.items, 0.5);
+      save(); closeModal(); render(); break; }
+    case "cal-unlog": {
+      const l = db.wearLog.find(x=>x.date===id); if(!l) break;
+      l.items.forEach(gid=>{ const g=db.garments.find(x=>x.id===gid); if(g) g.worn=Math.max(0,(g.worn||0)-1); });
+      db.wearLog = db.wearLog.filter(x=>x.date!==id);
+      save(); closeModal(); render(); break; }
+    case "plan-trip": tripModal(id); break;
+    case "trip-build": buildPlan(id); break;
+    case "trip-view": tripResultModal(id); break;
+    case "dismiss-start": db.gettingStartedDismissed = true; save(); render(); break;
+    case "export-data": {
+      const blob = new Blob([JSON.stringify(db,null,2)], {type:"application/json"});
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "wodrobe-export.json";
+      a.click(); URL.revokeObjectURL(a.href); break; }
+    case "wipe-data": {
+      if(confirm("Delete all wodrobe data on this device? This cannot be undone.")){
+        localStorage.removeItem(LS_KEY); location.reload();
+      } break; }
+    case "del-outfit": db.outfits = db.outfits.filter(x=>x.id!==id); save(); render(); break;
+    case "add-event": {
+      const t = document.getElementById("evTitle").value.trim();
+      const d = document.getElementById("evDate").value;
+      if(!t || !d) break;
+      db.events.push({id:"e"+uid(), title:t, type:document.getElementById("evType").value,
+        date:d, end:document.getElementById("evEnd").value||null,
+        location:document.getElementById("evLoc").value.trim(),
+        dressCode:document.getElementById("evCode").value.trim(),
+        notes:document.getElementById("evDesc").value.trim()});
+      save(); render(); break; }
+    case "del-event": db.events = db.events.filter(x=>x.id!==id); save(); render(); break;
+    case "plan-event": {
+      const ev = db.events.find(x=>x.id===id); if(!ev) break;
+      state.occ = ev.type==="formal"?"formal":ev.type==="travel"?"travel":ev.type==="work"?"work":ev.type==="date"?"date":ev.type==="sport"?"sport":"casual";
+      state.view="dress"; render();
+      readDressInputs(); state.generating=true; render(); await generate(); state.generating=false; render(); break; }
+    case "add-pref": {
+      const v = document.getElementById("newPref").value.trim();
+      if(v){ db.profile.stylePrefs.push(v); save(); render(); } break; }
+    case "del-pref": db.profile.stylePrefs.splice(i,1); save(); render(); break;
+    case "add-best": {
+      const n = document.getElementById("bcName").value.trim();
+      if(n){ db.profile.bestColors.push({name:n, hex:document.getElementById("bcHex").value}); save(); render(); } break; }
+    case "del-best": db.profile.bestColors.splice(i,1); save(); render(); break;
+    case "del-avoid": db.profile.avoidColors.splice(i,1); save(); render(); break;
+  }
+});
+function readDressInputs(){
+  const o = document.getElementById("occ"), t = document.getElementById("temp"), r = document.getElementById("rain");
+  const s = document.getElementById("dressScope");
+  if(o) state.occ = o.value; if(t) state.temp = +t.value; if(r) state.rain = r.checked;
+  if(s) state.scope = s.value;
+}
+document.addEventListener("input", e=>{
+  if(e.target.id==="temp"){ const out=document.getElementById("tempOut"); if(out) out.innerHTML = e.target.value+"&deg;C"; }
+  if(e.target.id==="tripTemp"){ const out=document.getElementById("tripTempOut"); if(out) out.innerHTML = e.target.value+"&deg;C"; }
+  if(e.target.id==="search"){ state.search = e.target.value;
+    const list = main.querySelector(".g-items"), empty = main.querySelector(".empty");
+    render(); const s = document.getElementById("search"); if(s){ s.focus(); s.setSelectionRange(s.value.length, s.value.length); } }
+});
+document.addEventListener("change", e=>{
+  const bind = e.target.dataset.bind;
+  if(bind){ db.profile[bind] = e.target.value; save(); }
+  if(e.target.dataset.set){ db.settings[e.target.dataset.set] = e.target.value.trim(); save(); render(); }
+  if(e.target.dataset.gfield){
+    const g = db.garments.find(x=>x.id===e.target.dataset.gid);
+    if(g){ g[e.target.dataset.gfield] = e.target.value; save(); }
+  }
+  if(e.target.id==="dressScope"){ state.scope = e.target.value; }
+});
+document.getElementById("importPick").addEventListener("change", ev=>{
+  const f = ev.target.files[0]; ev.target.value = ""; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      if(!data || !Array.isArray(data.garments)) throw new Error("not a wodrobe export");
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      location.reload();
+    }catch(err){ alert("Import failed: "+err.message); }
+  };
+  r.readAsText(f);
+});
+document.getElementById("mirrorPick").addEventListener("change", ev=>{
+  const f = ev.target.files[0]; ev.target.value = ""; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>mirrorCheck(r.result);
+  r.readAsDataURL(f);
+});
+
+render();
+if(!db.onboarded) welcomeModal();
+if("serviceWorker" in navigator && location.protocol !== "file:"){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+if(db.settings.lat != null){
+  fetchWeather().then(()=>{ if(state.view==="dashboard"||state.view==="dress") render(); }).catch(()=>{});
+}
+</script>
+</body>
+</html>
