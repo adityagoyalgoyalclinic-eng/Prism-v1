@@ -107,6 +107,20 @@ main{flex:1;padding:28px 32px;max-width:1060px}
 .cal-dots i{width:7px;height:7px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.15)}
 .bar{height:6px;background:var(--chip);border-radius:99px;margin-top:10px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent)}
+.item-card .swatch svg{transition:transform .28s ease}
+.item-card:hover .swatch svg{transform:rotate(-3deg) translateY(-3px) scale(1.05)}
+.fit-wrap{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:14px;align-items:start}
+@media(max-width:880px){.fit-wrap{grid-template-columns:1fr}}
+.avatar-card svg{width:100%;max-height:480px;display:block;margin:auto}
+.av-br{animation:breathe 4.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3.5px)}}
+.fit-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.fit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px}
+.fit-tile{aspect-ratio:1;border:1.5px solid var(--line);border-radius:12px;background:var(--chip);padding:4px;cursor:pointer;display:flex}
+.fit-tile:hover{border-color:var(--muted)}
+.fit-tile.on{border-color:var(--accent);box-shadow:0 0 0 1.5px var(--accent)}
+.fit-tile svg{transition:transform .25s ease}
+.fit-tile:hover svg{transform:rotate(-4deg) scale(1.07)}
 @media (max-width:760px){
   .app{flex-direction:column}
   .side{width:100%;height:auto;position:static;flex-direction:row;align-items:center;overflow-x:auto;padding:10px 12px;border-right:none;border-bottom:1px solid var(--line)}
@@ -131,6 +145,9 @@ main{flex:1;padding:28px 32px;max-width:1060px}
     <button class="nav-btn" data-act="nav" data-v="dress">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="M19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7z"/></svg>
       <span class="lbl">Dress me</span></button>
+    <button class="nav-btn" data-act="nav" data-v="fit">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M12 6 V8.5 M7.5 9 H16.5 L19 21 H5 Z"/><path d="M12 8.5 L7.5 9 M12 8.5 L16.5 9"/></svg>
+      <span class="lbl">Fit room</span></button>
     <button class="nav-btn" data-act="nav" data-v="calendar">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6h11M10 12h11M10 18h11"/><path d="M3 5.5 4.5 7 7 4"/><path d="M3 11.5 4.5 13 7 10"/><circle cx="4.7" cy="18" r="1.3"/></svg>
       <span class="lbl">Calendar</span></button>
@@ -160,8 +177,27 @@ const SEASONS = ["spring","summer","fall","winter"];
 const OCC_FORMALITY = {work:[3,4], casual:[1,2], date:[2,4], formal:[4,5], travel:[1,3], sport:[1,2], lounge:[1,1]};
 
 function seedData(){
+  return {
+    garments: [],
+    outfits: [],
+    rejected: [],
+    wearLog: [],
+    trips: {},
+    events: [],
+    onboarded: false,
+    profile: {
+      name:"You", undertone:"neutral", depth:"medium", season:"Soft summer", jewelry:"both",
+      bodyType:"rectangle", skinHex:null, hair:"brown",
+      bestColors:[{name:"dusty rose",hex:"#C49AA0"},{name:"sage",hex:"#9AA98C"},{name:"slate",hex:"#6E7B8C"},{name:"mauve",hex:"#9A7E9E"},{name:"soft navy",hex:"#3A4A66"},{name:"stone",hex:"#B8AFA0"}],
+      avoidColors:[{name:"neon green",hex:"#39FF14"},{name:"orange",hex:"#D2722A"}],
+      stylePrefs:["smart casual"],
+      learned:"Nothing yet — outfit feedback will build this profile."
+    }
+  };
+}
+function demoData(){
   const g = (id,name,cat,colors,pattern,formality,warmth,seasons,occasions,extra)=>Object.assign(
-    {id,name,cat,colors,pattern,formality,warmth,seasons,occasions,fav:false,worn:0,score:0,status:"active",img:null,rain:false,price:null,lastWorn:null}, extra||{});
+    {id,name,cat,colors,pattern,formality,warmth,seasons,occasions,fav:false,worn:0,score:0,status:"active",img:null,rain:false,price:null,lastWorn:null,condition:"good",care:""}, extra||{});
   const all = SEASONS.slice();
   const garments = [
     g("g01","White tee","top",[{name:"white",hex:"#F2EFE6"}],"solid",1,1,["spring","summer"],["casual","sport","lounge"],{worn:24}),
@@ -193,26 +229,19 @@ function seedData(){
   const d = n => { const t=new Date(); t.setDate(t.getDate()+n); return t.toISOString().slice(0,10); };
   return {
     garments,
-    outfits: [],
-    rejected: [],
-    wearLog: [],
-    trips: {},
-    onboarded: false,
     events: [
       {id:"e1", title:"Sara's wedding", type:"formal", date:d(21), end:null, dressCode:"cocktail", location:"Lakeside pavilion",
         notes:"Outdoor ceremony at 4pm, cocktail dress code. Dinner reception after, then party until late."},
       {id:"e2", title:"Lisbon trip", type:"travel", date:d(30), end:d(34), dressCode:"", location:"Lisbon",
         notes:"Day 1: arrive, walk the old town, dinner by the river. Day 2: beach morning, museum after, night out in Bairro Alto. Day 3: client meeting, then casual dinner. Day 4: hike to the viewpoint, flight home."},
-    ],
-    profile: {
-      name:"You", undertone:"warm", depth:"medium", season:"Warm autumn", jewelry:"gold",
-      bodyType:"athletic",
-      bestColors:[{name:"rust",hex:"#B7410E"},{name:"olive",hex:"#5A6242"},{name:"camel",hex:"#B98A4A"},{name:"cream",hex:"#F1E6D0"},{name:"forest",hex:"#2F4A35"},{name:"mustard",hex:"#C99A2E"}],
-      avoidColors:[{name:"icy pink",hex:"#FFD1DC"},{name:"neon green",hex:"#39FF14"}],
-      stylePrefs:["smart casual","earth tones","minimalist"],
-      learned:"Prefers relaxed fits over slim cuts. Brown chelsea boots are a safe anchor — pairs them with almost everything. Monochrome and navy/olive combinations rate highly for work."
-    }
+    ]
   };
+}
+function loadDemo(){
+  const demo = demoData();
+  db.garments = demo.garments;
+  db.events = demo.events;
+  save(); render();
 }
 
 let db;
@@ -225,7 +254,9 @@ db.presets = db.presets || [];
 db.wishlist = db.wishlist || [];
 db.pairs = db.pairs || {};
 db.chat = db.chat || [];
+db.fit = db.fit || {};
 db.garments.forEach(g=>{ if(!g.condition) g.condition="good"; if(g.care==null) g.care=""; });
+if(db.profile){ if(db.profile.skinHex===undefined) db.profile.skinHex=null; if(!db.profile.hair) db.profile.hair="brown"; }
 const save = () => localStorage.setItem(LS_KEY, JSON.stringify(db));
 const uid = () => Math.random().toString(36).slice(2,9);
 const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -591,34 +622,34 @@ function garmentArt(g){
         <rect x="67.5" y="75.6" width="18" height="6.4" rx="1.6" fill="${soleD}"/>
         <rect x="17.5" y="75.6" width="35" height="3.6" rx="1.6" fill="${soleD}" opacity=".95"/>`;
     } else if(/sneaker|trainer|running|tennis/.test(name) || g.formality<=2){
-      const SN = "M14.5 67 Q13.5 60 19 56.5 Q26 52.5 34 51 L48 48 Q50 41.5 56 40.5 L60 40.5 Q63 40.5 64 43 L66 47 Q69.5 44 75 44.5 Q83 45.5 85.5 53 Q87.5 59 87.5 67 Z";
+      const SN = "M14 67.5 Q13.6 61.5 18.5 58.5 Q25.5 54.6 35 53 L48.5 50.2 Q50.5 43.5 56.5 42.6 L60.5 42.4 Q63.2 42.4 64.2 44.8 L66 48.6 Q69.8 45.8 75 46.2 Q82.6 47 85.4 53.6 Q87.2 58.4 87.3 67.5 Z";
       body = ground + S(SN)
-        + `<path d="M14.5 67 Q13.5 60 19 56.5 Q26 52.5 34 51 Q38.2 58.5 36.6 67 Z" fill="${ln}" opacity=".14"/>
-        <path d="M33.6 51.3 Q37.9 58.5 36.4 66.6" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".8"/>
-        <path d="M46 49 L62.5 44.4 L64.8 48.8 L48.5 53.6 Z" fill="${ln}" opacity=".16"/>
-        <path d="M48.2 52.7 L54.2 48.3 M52.2 51.5 L58.2 47.1 M56.2 50.2 L62.2 45.9" stroke="${ln}" stroke-width="1.5" opacity=".9"/>
-        <circle cx="48.9" cy="51.6" r=".85" fill="${ln2}"/><circle cx="52.9" cy="50.3" r=".85" fill="${ln2}"/><circle cx="56.9" cy="49" r=".85" fill="${ln2}"/><circle cx="60.9" cy="47.7" r=".85" fill="${ln2}"/>
-        <path d="M50.5 42.5 Q56 40.8 62.8 43.2" stroke="${lum<75? ln : lt}" stroke-width="1.1" fill="none" opacity=".8"/>
-        <path d="M66 47 Q70 44.2 75 44.6 Q80.5 45.2 83.8 50.5" stroke="${ln}" stroke-width="2" fill="none" opacity=".55"/>
-        <rect x="78.6" y="41.6" width="5.2" height="3.6" rx="1.7" fill="${ln}" opacity=".85"/>
-        <path d="M75.5 45 Q78.8 55 78.4 66.5" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".7"/>
-        <path d="M64.5 49.5 Q70.5 52.5 76 60.5" stroke="${ln}" stroke-width=".8" stroke-dasharray="2 1.6" fill="none" opacity=".55"/>
-        <path d="M13.8 67 H87.6 Q89 67 88.8 69.8 Q88.4 74.4 82.8 74.7 Q49 76.6 19.8 74.8 Q13.9 74.4 13.6 69.6 Q13.5 67 13.8 67 Z" fill="${soleC}"/>
-        <path d="M15.2 74.3 Q49 77.2 84 74.4" stroke="${soleD}" stroke-width="2.4" fill="none"/>
-        ${Array.from({length:9},(_,k)=>`<path d="M${21+k*7.4} 75 v2.2" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>`).join("")}`;
+        + `<path d="M14 67.5 Q13.6 61.5 18.5 58.5 Q25.5 54.6 35 53 Q38.8 60 37.2 67.4 Z" fill="${ln}" opacity=".14"/>
+        <path d="M34.6 53.3 Q38.5 60 36.9 67" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".8"/>
+        <path d="M46.5 51 L62.8 46.6 L65 50.8 L49 55.4 Z" fill="${ln}" opacity=".22"/>
+        <path d="M48.7 54.5 L54.7 50.2 M52.7 53.3 L58.7 49 M56.7 52 L62.7 47.8" stroke="${ln2}" stroke-width="1.9" opacity="1"/>
+        <circle cx="49.4" cy="53.4" r="1.05" fill="${ln2}"/><circle cx="53.4" cy="52.1" r="1.05" fill="${ln2}"/><circle cx="57.4" cy="50.8" r="1.05" fill="${ln2}"/><circle cx="61.4" cy="49.5" r="1.05" fill="${ln2}"/>
+        <path d="M51 44.6 Q56.4 42.9 63 45.2" stroke="${lum<75? ln : lt}" stroke-width="1.1" fill="none" opacity=".8"/>
+        <path d="M66 48.6 Q70 45.9 75 46.3 Q80.3 46.9 83.6 52" stroke="${ln}" stroke-width="2" fill="none" opacity=".55"/>
+        <rect x="78.4" y="43.4" width="5.2" height="3.6" rx="1.7" fill="${ln}" opacity=".85"/>
+        <path d="M75.4 46.6 Q78.7 56 78.3 67" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".7"/>
+        <path d="M64.8 51 Q70.6 54 76 61.5" stroke="${ln}" stroke-width=".8" stroke-dasharray="2 1.6" fill="none" opacity=".55"/>
+        <path d="M13.6 67.5 H87.4 Q88.8 67.5 88.6 70.2 Q88.2 74.6 82.6 74.9 Q49 76.8 19.6 75 Q13.8 74.6 13.5 70 Q13.4 67.5 13.6 67.5 Z" fill="${soleC}"/>
+        <path d="M15 74.5 Q49 77.4 84 74.6" stroke="${soleD}" stroke-width="2.4" fill="none"/>
+        ${Array.from({length:9},(_,k)=>`<path d="M${21+k*7.4} 75.2 v2.2" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>`).join("")}`;
     } else {
-      const DB = "M14.8 68.5 Q14 63 19.5 60 Q25 57.2 33 56 L46.5 54 Q49.5 48.8 55.5 48.2 Q60.5 47.8 62.5 50.5 L64.8 54.5 Q74 55.6 81 59.2 Q86 61.8 86.3 67 L86.4 69.7 H15 Z";
+      const DB = "M13.5 69.5 Q13 65.8 17 63.8 Q23 60.8 31.5 59.8 L46 57.8 Q49 52.2 55 51.5 Q60 51 62 53.6 L64.3 57.2 Q74 58 81 60.8 Q85.8 62.9 86.2 67.2 L86.4 70 H14 Z";
       body = ground + S(DB)
-        + `<path d="M33 56.2 Q37.2 62 36.2 69.2" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".85"/>
-        <circle cx="34.4" cy="58.8" r=".6" fill="${ln}"/><circle cx="35.5" cy="61.6" r=".6" fill="${ln}"/><circle cx="36" cy="64.4" r=".6" fill="${ln}"/><circle cx="36" cy="67.2" r=".6" fill="${ln}"/>
-        <path d="M52 50.6 L62.6 50.9 L64.6 54.7 L53.4 55.9 Z" fill="${ln}" opacity=".18"/>
-        <path d="M53.6 52.5 L61.6 52.2 M53.2 54.4 L62.2 54.1" stroke="${ln}" stroke-width="1.3" opacity=".9"/>
-        <circle cx="54" cy="52.4" r=".7" fill="${ln2}"/><circle cx="61.2" cy="52.1" r=".7" fill="${ln2}"/><circle cx="53.6" cy="54.3" r=".7" fill="${ln2}"/><circle cx="61.8" cy="54" r=".7" fill="${ln2}"/>
-        <path d="M50 49.3 Q55.5 47.6 61 49" stroke="${lum<75? ln : lt}" stroke-width="1" fill="none" opacity=".75"/>
-        <path d="M72.5 56.8 Q76.8 62 76.3 69.4" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".7"/>
-        <path d="M16.8 67.8 H85.2" stroke="${ln}" stroke-width=".8" stroke-dasharray="2.4 2" opacity=".6"/>
-        <path d="M15 69.7 H86.4 Q87.7 69.8 87.4 71.9 Q87.1 73.8 84 73.9 H18 Q15.2 73.7 15 71.7 Z" fill="${soleD}"/>
-        <rect x="68.5" y="73.8" width="16" height="5" rx="1.3" fill="${soleD}"/>`;
+        + `<path d="M31.5 60 Q35.8 64.5 35 69.6" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".9"/>
+        <circle cx="33" cy="62.2" r=".6" fill="${ln}"/><circle cx="34.2" cy="64.4" r=".6" fill="${ln}"/><circle cx="34.9" cy="66.6" r=".6" fill="${ln}"/><circle cx="35" cy="68.7" r=".6" fill="${ln}"/>
+        <path d="M52.5 53.4 L62 53.8 L63.9 57.3 L53.8 58.5 Z" fill="${ln}" opacity=".2"/>
+        <path d="M54 55.2 L61 54.9 M53.7 56.9 L61.7 56.6" stroke="${ln}" stroke-width="1.4" opacity=".95"/>
+        <circle cx="54.3" cy="55.1" r=".7" fill="${ln2}"/><circle cx="60.7" cy="54.85" r=".7" fill="${ln2}"/><circle cx="54" cy="56.85" r=".7" fill="${ln2}"/><circle cx="61.3" cy="56.55" r=".7" fill="${ln2}"/>
+        <path d="M50.5 52.3 Q55 50.8 60 52" stroke="${lum<75? ln : lt}" stroke-width="1" fill="none" opacity=".8"/>
+        <path d="M72.5 58.6 Q76.5 63 76.2 69.6" stroke="${ln}" stroke-width=".9" stroke-dasharray="2 1.6" fill="none" opacity=".75"/>
+        <path d="M16 68.3 H85.3" stroke="${ln}" stroke-width=".8" stroke-dasharray="2.4 2" opacity=".65"/>
+        <path d="M14 70 H86.4 Q87.7 70.1 87.4 72.1 Q87.1 73.9 84 74 H17 Q14.2 73.8 14 71.8 Z" fill="${soleD}"/>
+        <rect x="68.5" y="74" width="16" height="4.8" rx="1.3" fill="${soleD}"/>`;
     }
   } else {
     if(/belt/.test(name)){
@@ -653,7 +684,6 @@ function garmentArt(g){
   return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:78%;height:86%;display:block;margin:auto"><defs>${defs}</defs>${body}</svg>`;
 }
 function swatchDiv(g, cls, inner=""){
-  if(g.img) return `<div class="${cls}" style="background-image:url('${g.img}');background-size:cover;background-position:center">${inner}</div>`;
   return `<div class="${cls}" style="background:var(--chip);display:flex">${garmentArt(g)}${inner}</div>`;
 }
 function itemCard(g){
@@ -744,7 +774,7 @@ function viewDashboard(){
       : pick? `<div class="opt-items" style="margin:12px 0 10px">${pick.items.map(g=>tile(g,g.cat)).join("")}</div>
         <div class="actions"><button class="primary" data-act="today-wear">I'll wear this</button>
         <button data-act="nav" data-v="dress">More options</button></div>`
-      : `<div class="mini" style="margin-top:10px">Add a few more items and I'll have a morning suggestion ready.</div>`}
+      : `<div class="mini" style="margin-top:10px">Add a few items and I'll have a morning suggestion ready &mdash; or <button class="ghost" data-act="load-demo" style="padding:2px 8px;font-size:12px">load the demo wardrobe</button> to explore.</div>`}
   </div>
   ${inSeasonStored.length? `<div class="note" style="margin-bottom:18px">It's ${currentSeason()} &mdash; ${inSeasonStored.length} stored item${inSeasonStored.length===1?" is":"s are"} back in season (${inSeasonStored.slice(0,3).map(g=>esc(g.name)).join(", ")}${inSeasonStored.length>3?"&hellip;":""}). <button class="ghost" data-act="filter-stored" style="padding:2px 10px;font-size:12px">Review stored</button></div>`:""}
   ${showStart? `<div class="card" style="margin-bottom:18px">
@@ -814,8 +844,9 @@ function viewWardrobe(){
   </div>
   <div class="grid g-items">
     <button class="up-tile" data-act="add-garment"><span class="plus">+</span>
-      <span>Click to add photos</span><span class="mini">single items or full outfit photos &mdash; AI extracts each piece</span></button>
-    ${list.map(itemCard).join("")}</div>`;
+      <span>Click to add photos</span><span class="mini">single items or full outfit photos &mdash; AI extracts each piece as illustrated artwork</span></button>
+    ${list.map(itemCard).join("")}</div>
+  ${db.garments.length===0? `<div class="empty" style="margin-top:14px">Your wardrobe starts empty &mdash; upload your clothes above, or <button data-act="load-demo" style="margin:0 4px">load the demo wardrobe</button> to explore every feature first.</div>`:""}`;
 }
 
 function viewDress(){
@@ -1185,6 +1216,7 @@ function garmentDetail(id){
   const g = db.garments.find(x=>x.id===id); if(!g) return;
   openModal(`<h2>${esc(g.name)} <button class="ghost" data-act="close">&times;</button></h2>
   <div style="border-radius:10px;overflow:hidden;margin:10px 0">${swatchDiv(g, "swatch")}</div>
+  ${g.img?`<details style="margin:0 0 10px"><summary class="mini" style="cursor:pointer">Original photo</summary><img class="rev-img" src="${g.img}" style="margin-top:8px"></details>`:""}
   <div class="pal">${g.colors.map(c=>colorChip(c)).join("")}
     <span class="chip">${esc(g.cat)}</span><span class="chip">formality ${g.formality}/5</span>
     <span class="chip">warmth ${g.warmth}/5</span><span class="chip">${g.worn||0}&times; worn</span>
@@ -1513,6 +1545,8 @@ function wizApply(){
     bestColors: r.palette.best.map(c=>({name:c[0], hex:c[1]})),
     avoidColors: r.palette.avoid.map(c=>({name:c[0], hex:c[1]}))
   });
+  if(state.wiz && state.wiz.faceSample) db.profile.skinHex = state.wiz.faceSample.hex;
+  if(state.wiz && state.wiz.answers && state.wiz.answers.hair) db.profile.hair = state.wiz.answers.hair;
   const first = !db.onboarded;
   db.onboarded = true;
   save(); state.wiz = null; closeModal(); state.view = first ? "dashboard" : "profile"; render();
@@ -1638,6 +1672,173 @@ async function listingModal(gid){
   }
   const ta = document.getElementById("listingText");
   if(ta) ta.value = text;
+}
+
+/* ---------- dressing room: personalized avatar ---------- */
+const HAIR_COLOR = {black:"#241F1B","dark brown":"#3B2A1E",brown:"#5A3E28","light brown":"#7B5836",blonde:"#C9A35F",red:"#8C3B22",grey:"#8E8A84"};
+function skinHexFor(){
+  if(db.profile.skinHex) return db.profile.skinHex;
+  const base = {fair:"#F3DAC6", light:"#E9C6A6", medium:"#C98F66", "medium-deep":"#9C6B47", deep:"#6E4630"}[db.profile.depth] || "#C98F66";
+  let [r,g,b] = hex2rgb(base);
+  if(db.profile.undertone==="warm"){ r=Math.min(255,r+8); b=Math.max(0,b-6); }
+  else if(db.profile.undertone==="cool"){ b=Math.min(255,b+8); r=Math.max(0,r-4); }
+  else if(db.profile.undertone==="olive"){ g=Math.min(255,g+7); }
+  return rgb2hex(r,g,b);
+}
+function makeFill(g, pid){
+  const c0 = g.colors[0] ? g.colors[0].hex : "#999";
+  const c1 = g.colors[1] ? g.colors[1].hex : c0;
+  let fill = c0, defs = "";
+  if(g.pattern==="stripe" && g.colors[1]){
+    defs = `<pattern id="${pid}" width="12" height="12" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="${c0}"/><rect width="6" height="12" fill="${c1}"/></pattern>`;
+    fill = `url(#${pid})`;
+  } else if(g.pattern==="texture"){
+    defs = `<pattern id="${pid}" width="7" height="5" patternUnits="userSpaceOnUse"><rect width="7" height="5" fill="${c0}"/><path d="M0 2.5 Q1.75 1 3.5 2.5 Q5.25 4 7 2.5" stroke="${tintHex(c0,.14)}" stroke-width="1.3" fill="none"/></pattern>`;
+    fill = `url(#${pid})`;
+  } else if(g.pattern==="floral"){
+    defs = `<pattern id="${pid}" width="15" height="15" patternUnits="userSpaceOnUse"><rect width="15" height="15" fill="${c0}"/><circle cx="4" cy="4" r="2" fill="${c1}"/><circle cx="11.5" cy="10.5" r="1.4" fill="${c1}"/></pattern>`;
+    fill = `url(#${pid})`;
+  }
+  return {fill, defs, c0, c1};
+}
+function avatarSvg(){
+  const skin = skinHexFor(), skinD = shadeHex(skin,.78);
+  const hairC = HAIR_COLOR[db.profile.hair||"brown"] || "#5A3E28";
+  const m = {rectangle:[1,.94,1], hourglass:[1.04,.8,1.07], pear:[.94,.88,1.16], "inverted triangle":[1.16,.9,.94], athletic:[1.1,.9,.97], round:[1,1.08,1.07]}[db.profile.bodyType||"rectangle"] || [1,.94,1];
+  const SH=52*m[0], WA=34*m[1], HP=44*m[2];
+  const cx=110, shY=100, waY=192, hpY=234, ankY=390, mid=(shY+waY)/2;
+  const fit = db.fit;
+  const G = k => fit[k] ? db.garments.find(x=>x.id===fit[k] && x.status==="active") : null;
+  const top=G("top"), dress=G("dress"), bottom=G("bottom"), outer=G("outerwear"), shoes=G("footwear"), acc=G("accessory");
+  let defs = `<linearGradient id="avG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".15"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset=".68" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>`;
+  let seq = 0;
+  const F = g => { const r = makeFill(g, "av"+(seq++)+"_"+g.id); defs += r.defs; return r; };
+  const SHD = d => `<path d="${d}" fill="url(#avG)"/>`;
+  const torso = `M${cx-SH} ${shY+6} Q${cx-SH-3} ${mid} ${cx-WA} ${waY} Q${cx-HP-1} ${hpY-14} ${cx-HP+5} ${hpY+2} H${cx+HP-5} Q${cx+HP+1} ${hpY-14} ${cx+WA} ${waY} Q${cx+SH+3} ${mid} ${cx+SH} ${shY+6} Q${cx} ${shY-12} ${cx-SH} ${shY+6} Z`;
+  const legL = `M${cx-HP+5} ${hpY} H${cx-5} V${ankY} H${cx-19} Z`;
+  const legR = `M${cx+HP-5} ${hpY} H${cx+5} V${ankY} H${cx+19} Z`;
+  let out = "";
+  out += `<path d="${legL}" fill="${skin}"/><path d="${legR}" fill="${skin}"/>` + SHD(legL) + SHD(legR);
+  if(!shoes) out += `<rect x="${cx-25}" y="${ankY}" width="21" height="12" rx="6" fill="${skin}"/><rect x="${cx+4}" y="${ankY}" width="21" height="12" rx="6" fill="${skin}"/>`;
+  if(bottom && !dress){
+    const f = F(bottom);
+    if(/skirt/.test(bottom.name.toLowerCase())){
+      const d0 = `M${cx-HP-4} ${hpY-10} H${cx+HP+4} L${cx+HP+13} 306 Q${cx} 317 ${cx-HP-13} 306 Z`;
+      out += `<path d="${d0}" fill="${f.fill}"/>` + SHD(d0)
+        + `<path d="M${cx-HP-2} ${hpY-3} H${cx+HP+2}" stroke="${shadeHex(f.c0,.6)}" stroke-width="2"/>`;
+    } else {
+      const d0 = `M${cx-HP-3} ${hpY-10} H${cx+HP+3} L${cx+21} ${ankY+3} H${cx+4} L${cx} ${hpY+32} L${cx-4} ${ankY+3} H${cx-21} Z`;
+      const st = /jean|denim|indigo/.test(bottom.name.toLowerCase()) ? "#C9A35F" : shadeHex(f.c0,.6);
+      out += `<path d="${d0}" fill="${f.fill}"/>` + SHD(d0)
+        + `<path d="M${cx-HP-1} ${hpY-4} H${cx+HP+1}" stroke="${shadeHex(f.c0,.6)}" stroke-width="2.4"/>
+        <path d="M${cx} ${hpY-2} V${hpY+14}" stroke="${st}" stroke-width="1.2" opacity=".8"/>`;
+    }
+  }
+  if(shoes){
+    const f = F(shoes); const nm = shoes.name.toLowerCase();
+    const sole = shadeHex(f.c0,.55);
+    const lumS = (()=>{ const [r,g2,b] = hex2rgb(f.c0); return .2126*r+.7152*g2+.0722*b; })();
+    const det = lumS<75 ? tintHex(f.c0,.42) : shadeHex(f.c0,.6);
+    const soleC = lumS<75 ? tintHex(f.c0,.32) : sole;
+    const foot = fx => {
+      if(/boot|chelsea/.test(nm))
+        return `<rect x="${fx-11}" y="346" width="22" height="${ankY-342}" rx="4" fill="${f.fill}"/><rect x="${fx-12.5}" y="${ankY-2}" width="25" height="13" rx="5" fill="${f.fill}"/><path d="M${fx-12.5} ${ankY+9} h25" stroke="${soleC}" stroke-width="3.4"/><path d="M${fx-9} 349.5 h18" stroke="${det}" stroke-width="1.2"/>`;
+      if(/sneaker|trainer/.test(nm) || shoes.formality<=2)
+        return `<rect x="${fx-13}" y="${ankY-4}" width="26" height="15" rx="7" fill="${f.fill}"/><path d="M${fx-13.5} ${ankY+9} h27" stroke="${soleC}" stroke-width="3.6"/><path d="M${fx-5} ${ankY-1} h10 M${fx-5} ${ankY+2.5} h10" stroke="${det}" stroke-width="1.3"/>`;
+      return `<rect x="${fx-12}" y="${ankY-2}" width="24" height="13" rx="5" fill="${f.fill}"/><path d="M${fx-12} ${ankY+9} h24" stroke="${soleC}" stroke-width="3"/><path d="M${fx-7} ${ankY+1.5} h14" stroke="${det}" stroke-width="1"/>`;
+    };
+    out += foot(cx-13.5) + foot(cx+13.5);
+  }
+  out += `<rect x="${cx-8}" y="72" width="16" height="${shY-66}" fill="${skinD}"/>`;
+  out += `<path d="${torso}" fill="${skin}"/>` + SHD(torso);
+  if(!top && !dress && !outer)
+    out += `<rect x="${cx-SH+9}" y="${shY+16}" width="${(SH-9)*2}" height="30" rx="15" fill="#CDC5B6"/><rect x="${cx-SH+9}" y="${shY+16}" width="${(SH-9)*2}" height="30" rx="15" fill="url(#avG)"/>`;
+  if(!bottom && !dress)
+    out += `<path d="M${cx-HP+7} ${hpY-4} H${cx+HP-7} L${cx+HP-15} ${hpY+22} Q${cx} ${hpY+33} ${cx-HP+15} ${hpY+22} Z" fill="#CDC5B6"/>`;
+  const armRect = x => `<rect x="${x}" y="${shY+6}" width="15" height="132" rx="7.5" fill="${skin}"/><rect x="${x}" y="${shY+6}" width="15" height="132" rx="7.5" fill="url(#avG)"/>`;
+  out += armRect(cx-SH-16) + armRect(cx+SH+1);
+  if(dress){
+    const f = F(dress);
+    const d0 = `M${cx-SH+10} ${shY+1} Q${cx} ${shY-8} ${cx+SH-10} ${shY+1} L${cx+WA} ${waY} Q${cx+HP+5} ${hpY+24} ${cx+HP+13} 308 Q${cx} 320 ${cx-HP-13} 308 Q${cx-HP-5} ${hpY+24} ${cx-WA} ${waY} Z`;
+    out += `<path d="${d0}" fill="${f.fill}"/>` + SHD(d0)
+      + `<path d="M${cx-WA+3} ${waY} Q${cx} ${waY+6} ${cx+WA-3} ${waY}" stroke="${shadeHex(f.c0,.6)}" stroke-width="1.6" fill="none" opacity=".8"/>
+      <ellipse cx="${cx}" cy="${shY+1}" rx="10" ry="6" fill="${skin}"/>`;
+  }
+  if(top && !dress){
+    const f = F(top); const nm = top.name.toLowerCase();
+    const longS = top.warmth>=3 || (/shirt|oxford|blouse|sweater|crewneck|merino|fleece|hoodie/.test(nm) && !/tee|t-shirt/.test(nm));
+    const len = hpY+6;
+    const d0 = `M${cx-SH-2} ${shY+3} Q${cx-SH-4} ${mid} ${cx-WA-1} ${waY} Q${cx-HP} ${hpY-12} ${cx-HP+6} ${len} H${cx+HP-6} Q${cx+HP} ${hpY-12} ${cx+WA+1} ${waY} Q${cx+SH+4} ${mid} ${cx+SH+2} ${shY+3} Q${cx} ${shY-10} ${cx-SH-2} ${shY+3} Z`;
+    const slH = longS ? 134 : 46;
+    const slv = x => `<rect x="${x}" y="${shY+4}" width="16" height="${slH}" rx="8" fill="${f.fill}"/><rect x="${x}" y="${shY+4}" width="16" height="${slH}" rx="8" fill="url(#avG)"/>`;
+    out += slv(cx-SH-17) + slv(cx+SH+1) + `<path d="${d0}" fill="${f.fill}"/>` + SHD(d0);
+    const dkc = shadeHex(f.c0,.62);
+    out += `<ellipse cx="${cx}" cy="${shY+2}" rx="11" ry="6.5" fill="${skin}"/>
+      <path d="M${cx-12} ${shY+4} Q${cx} ${shY+12} ${cx+12} ${shY+4}" stroke="${dkc}" stroke-width="2" fill="none"/>`;
+    if(/shirt|oxford|blouse/.test(nm) && top.formality>=3)
+      out += `<path d="M${cx} ${shY+12} V${len-4}" stroke="${dkc}" stroke-width="1.4" opacity=".7"/>`
+        + [0,1,2,3].map(k=>`<circle cx="${cx}" cy="${shY+24+k*18}" r="1.5" fill="${dkc}"/>`).join("")
+        + `<path d="M${cx-12} ${shY+3} L${cx} ${shY+14} L${cx+12} ${shY+3}" fill="none" stroke="${dkc}" stroke-width="1.6"/>`;
+    if(top.warmth>=3) out += `<path d="M${cx-HP+9} ${len-4} H${cx+HP-9}" stroke="${dkc}" stroke-width="1.6" opacity=".6"/>`;
+  }
+  if(acc && /belt/.test(acc.name.toLowerCase()) && (bottom||dress)){
+    const f = F(acc); const metal = db.profile.jewelry==="silver" ? "#A9AFB8" : "#C2912E";
+    out += `<rect x="${cx-HP-1}" y="${hpY-13}" width="${(HP+1)*2}" height="9" rx="2" fill="${f.fill}"/>
+    <rect x="${cx-6}" y="${hpY-15}" width="12" height="13" rx="2.5" fill="none" stroke="${metal}" stroke-width="2.5"/>`;
+  }
+  if(outer){
+    const f = F(outer); const nm = outer.name.toLowerCase();
+    const len = (outer.warmth>=4 || /overcoat|trench/.test(nm)) ? 322 : 262;
+    const pL = `M${cx-SH-5} ${shY+2} Q${cx-SH-7} ${mid} ${cx-WA-5} ${waY} L${cx-HP-5} ${len} H${cx-7} V${shY+14} Q${cx-20} ${shY-2} ${cx-SH-5} ${shY+2} Z`;
+    const pR = `M${cx+SH+5} ${shY+2} Q${cx+SH+7} ${mid} ${cx+WA+5} ${waY} L${cx+HP+5} ${len} H${cx+7} V${shY+14} Q${cx+20} ${shY-2} ${cx+SH+5} ${shY+2} Z`;
+    const slv = x => `<rect x="${x}" y="${shY+3}" width="18" height="138" rx="9" fill="${f.fill}"/><rect x="${x}" y="${shY+3}" width="18" height="138" rx="9" fill="url(#avG)"/>`;
+    const dkc = shadeHex(f.c0,.6);
+    out += slv(cx-SH-19) + slv(cx+SH+1)
+      + `<path d="${pL}" fill="${f.fill}"/><path d="${pL}" fill="url(#avG)"/><path d="${pR}" fill="${f.fill}"/><path d="${pR}" fill="url(#avG)"/>
+      <path d="M${cx-7} ${shY+14} L${cx-22} ${shY+4} L${cx-7} ${shY+26} Z" fill="${dkc}"/>
+      <path d="M${cx+7} ${shY+14} L${cx+22} ${shY+4} L${cx+7} ${shY+26} Z" fill="${dkc}"/>`;
+  }
+  out += `<circle cx="${cx-SH-8.5}" cy="${shY+146}" r="7.5" fill="${skin}"/><circle cx="${cx+SH+8.5}" cy="${shY+146}" r="7.5" fill="${skin}"/>`;
+  if(acc && /scarf/.test(acc.name.toLowerCase())){
+    const f = F(acc);
+    out += `<ellipse cx="${cx}" cy="${shY+2}" rx="21" ry="10" fill="${f.fill}"/><ellipse cx="${cx}" cy="${shY+2}" rx="21" ry="10" fill="url(#avG)"/>
+    <path d="M${cx-12} ${shY+8} L${cx-15} 158 Q${cx-15} 162 ${cx-11} 162 H${cx-4} Q${cx-1} 162 ${cx-2} 158 L${cx-4} ${shY+10} Z" fill="${f.fill}"/>
+    ${[0,1,2,3].map(k=>`<path d="M${cx-14+k*3.4} 162 v4.5" stroke="${shadeHex(f.c0,.6)}" stroke-width="1.1"/>`).join("")}`;
+  }
+  out += `<ellipse cx="${cx}" cy="46" rx="23" ry="26" fill="${skin}"/><ellipse cx="${cx}" cy="46" rx="23" ry="26" fill="url(#avG)"/>
+  <circle cx="${cx-23}" cy="48" r="4" fill="${skin}"/><circle cx="${cx+23}" cy="48" r="4" fill="${skin}"/>
+  <path d="M${cx-23.5} 46 Q${cx-25} 14 ${cx} 13 Q${cx+25} 14 ${cx+23.5} 46 Q${cx+23} 29 ${cx+14} 25 Q${cx} 21 ${cx-14} 25 Q${cx-23} 29 ${cx-23.5} 46 Z" fill="${hairC}"/>
+  <circle cx="${cx-8.5}" cy="47" r="2" fill="#2E2723"/><circle cx="${cx+8.5}" cy="47" r="2" fill="#2E2723"/>
+  <path d="M${cx-12.5} 41.5 q4 -2.6 8 -.6 M${cx+4.5} 40.9 q4 -2 8 .6" stroke="${shadeHex(hairC,.8)}" stroke-width="1.6" fill="none"/>
+  <path d="M${cx-5} 57 Q${cx} 60.5 ${cx+5} 57" stroke="${skinD}" stroke-width="1.8" fill="none"/>`;
+  const shadow = `<ellipse cx="${cx}" cy="412" rx="58" ry="7" fill="#000" opacity=".14"/>`;
+  return `<svg viewBox="0 0 220 424" xmlns="http://www.w3.org/2000/svg"><defs>${defs}</defs>${shadow}<g class="av-br">${out}</g></svg>`;
+}
+function viewFit(){
+  const active = db.garments.filter(g=>g.status==="active");
+  const cats = ["top","bottom","dress","outerwear","footwear","accessory"];
+  if(!state.fitCat) state.fitCat = "top";
+  const items = active.filter(g=>g.cat===state.fitCat);
+  const fit = db.fit;
+  const wornIds = Object.values(fit).filter(Boolean);
+  return `
+  <div class="topline"><div><h1>Dressing room</h1>
+    <div class="sub">Your avatar &mdash; ${esc(db.profile.depth)} ${esc(db.profile.undertone)} skin, ${esc(db.profile.bodyType)} frame, from your analysis. Tap clothes to try them on.</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button data-act="fit-random">Surprise me</button>
+      <button class="ghost" data-act="fit-clear">Undress</button>
+      ${wornIds.length>=2?`<button class="primary" data-act="fit-save">Save this look</button>`:""}</div></div>
+  <div class="fit-wrap">
+    <div class="card avatar-card">${avatarSvg()}
+      <div class="mini" style="text-align:center;margin-top:8px">${wornIds.length? wornIds.map(id=>{const g=db.garments.find(x=>x.id===id); return g?esc(g.name):"";}).filter(Boolean).join(" + ") : "Nothing on yet &mdash; pick something from the rail."}</div>
+      <div class="note" style="margin-top:12px">Prototype avatar: stylized 2.5D, tinted to your analyzed skin tone, hair and body type. In production this is a real 3D avatar (three.js / Ready Player Me) with draped garment meshes.</div>
+    </div>
+    <div class="card">
+      <div class="fit-tabs">${cats.map(c=>`<button class="f ${state.fitCat===c?"on":""}" data-act="fit-cat" data-id="${c}" style="border-radius:999px;padding:6px 13px;font-size:13px">${cap(c)}${fit[c]?" &#10003;":""}</button>`).join("")}</div>
+      ${items.length? `<div class="fit-grid">${items.map(g=>`<button class="fit-tile ${fit[g.cat]===g.id?"on":""}" data-act="fit-wear" data-id="${g.id}" title="${esc(g.name)}">${garmentArt(g)}</button>`).join("")}</div>`
+        : `<div class="empty">No ${esc(state.fitCat)} items yet.${db.garments.length===0?` <button data-act="load-demo" style="margin-left:6px">Load demo wardrobe</button>`:""}</div>`}
+    </div>
+  </div>`;
 }
 
 /* ---------- wear calendar ---------- */
@@ -1851,7 +2052,7 @@ function tripResultModal(evId){
 
 /* ---------- render & events ---------- */
 const main = document.getElementById("main");
-const views = {dashboard:viewDashboard, wardrobe:viewWardrobe, dress:viewDress, calendar:viewCalendar, events:viewEvents, profile:viewProfile};
+const views = {dashboard:viewDashboard, wardrobe:viewWardrobe, dress:viewDress, fit:viewFit, calendar:viewCalendar, events:viewEvents, profile:viewProfile};
 function render(){
   document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active", b.dataset.v===state.view));
   main.innerHTML = views[state.view]();
@@ -1948,6 +2149,32 @@ document.addEventListener("click", async e=>{
     case "wish-del": db.wishlist.splice(i,1); save(); render(); break;
     case "wish-got": db.wishlist.splice(i,1); save(); render(); document.getElementById("filePick").click(); break;
     case "import-data": document.getElementById("importPick").click(); break;
+    case "load-demo": loadDemo(); break;
+    case "fit-cat": state.fitCat = id; render(); break;
+    case "fit-wear": {
+      const g = db.garments.find(x=>x.id===id); if(!g) break;
+      if(db.fit[g.cat]===id) db.fit[g.cat] = null;
+      else {
+        db.fit[g.cat] = id;
+        if(g.cat==="dress"){ db.fit.top = null; db.fit.bottom = null; }
+        if(g.cat==="top" || g.cat==="bottom") db.fit.dress = null;
+      }
+      save(); render(); break; }
+    case "fit-clear": db.fit = {}; save(); render(); break;
+    case "fit-random": {
+      let {combos} = buildCombos("casual", state.temp, state.rain, null, "all");
+      if(!combos.length) ({combos} = buildCombos("work", state.temp, state.rain, null, "all"));
+      if(!combos.length) break;
+      const pick = combos[Math.floor(Math.random()*Math.min(combos.length,6))];
+      db.fit = {};
+      pick.items.forEach(g=>{ db.fit[g.cat] = g.id; });
+      save(); render(); break; }
+    case "fit-save": {
+      const ids = Object.values(db.fit).filter(Boolean);
+      if(ids.length<2) break;
+      db.outfits.push({id:"o"+uid(), title:"Dressing room look", items:ids, occ:"styled", temp:state.temp,
+        hash:ids.slice().sort().join("|"), date:isoOf(new Date()), wornCount:0});
+      updatePairs(ids, 1); save(); render(); break; }
     case "wore-outfit": {
       const o = db.outfits.find(x=>x.id===id); if(!o) break;
       o.wornCount=(o.wornCount||0)+1;
